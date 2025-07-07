@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Print styles for PDF preview */
+@media print {
+  /* Hide the print header when printing */
+  .print\\:hidden {
+    display: none !important;
+  }
+  
+  /* Remove shadows and margins for clean print */
+  .print\\:shadow-none {
+    box-shadow: none !important;
+  }
+  
+  .print\\:my-0 {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+  
+  /* Ensure proper page breaks */
+  .print\\:p-6 {
+    padding: 1.5rem !important;
+  }
+  
+  /* Force background colors to print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  
+  /* Ensure the page uses full width */
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: "DM Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* 🔹 Globally remove arrows from number inputs */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+/*  */
+
+/* BodySelection component styles */
+.body-selection-container {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+/* Hotspot animation */
+.custom-hotspot {
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+/* Selected state */
+.custom-hotspot.selected {
+  transform: translate(-50%, -50%) scale(1.2);
+  background-color: #3b82f6;
+  z-index: 10;
+}
+
+/* Debug grid */
+.debug-grid {
+  background-size: 10% 10%;
+  background-image: 
+    linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px);
+}
+
+.custom-hotspot {
+  width: 24px;
+  height: 24px;
+  background: rgba(59, 130, 246, 0.7);
+  border-radius: 50%;
+  border: 2px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.custom-hotspot:hover {
+  transform: scale(1.2);
+  background: rgba(59, 130, 246, 0.9);
+}
+
+.hotspot-indicator {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hotspot-indicator.active {
+  background: rgba(34, 197, 94, 0.9);
+}

@@ -1,0 +1,107 @@
+{
+    "common": {
+      "title": "BALANCE SPA",
+      "subtitle": "Luxury Wellness Experience"
+    },
+    "services": [
+      {
+        "id": "moroccan",
+        "title": "Original Moroccon Bath",
+        "description": "Authentic Moroccan bathing ritual",
+        "image": "moroccon-bath.png"
+      },
+      {
+        "id": "treatment",
+        "title": "Treatment Services",
+        "description": "Professional therapeutic massages",
+        "image": "treatment-service.png"
+      },
+      {
+        "id": "beauty",
+        "title": "Beauty Services",
+        "description": "Complete body wellness treatments",
+        "image": "beauty-service.png"
+      }
+    ],
+    "treatments": [
+      {
+        "title": "Thai Massage",
+        "category": "treatment",
+        "description": "A type of full body massage that uses a mixture of deep tissue pressure, muscle and joint stretching, and gentle adjustments of the body into yoga-like poses",
+        "image": "thai-massage.png",
+        "pricing": [
+          { "duration": "60 min", "price": "220 Qr" },
+          { "duration": "90 min", "price": "250 Qr" },
+          { "duration": "2 hrs", "price": "300 Qr" }
+        ]
+      },
+      {
+        "title": "Sport Massage",
+        "category": "treatment",
+        "description": "A type of massage designed to help athletes before, during and after training. Sports massage can help you to: increase flexibility, prevent injuries, improve performance",
+        "image": "sport-massage.png",
+        "pricing": [
+          { "duration": "60 min", "price": "140 Qr" },
+          { "duration": "90 min", "price": "185 Qr" },
+          { "duration": "120 min", "price": "230 Qr" }
+        ]
+      },
+      {
+        "title": "Aromatherapy Massage",
+        "category": "treatment",
+        "description": "Combines the power of essential oils with massage therapy, benefiting both the mind and the body. It is a holistic experience meant to improve your physical and mental well-being",
+        "image": "aromatherapy.png",
+        "pricing": [
+          { "duration": "60 min", "price": "130 Qr" },
+          { "duration": "90 min", "price": "175 Qr" },
+          { "duration": "120 min", "price": "220 Qr" }
+        ]
+      },
+      {
+        "title": "Swedish Massage",
+        "category": "treatment",
+        "description": "Classic Swedish massage techniques for ultimate relaxation",
+        "image": "swedishmassage.png",
+        "pricing": [
+          { "duration": "60 min", "price": "100 Qr" },
+          { "duration": "90 min", "price": "150 Qr" }
+        ]
+      },
+      {
+        "title": "Original Moroccan Bath",
+        "category": "moroccan",
+        "description": "The MOROCCAN BATH, also known as Hammam, is an ancient bathing ritual that has been cherished for centuries in Moroccan culture. Unlike other spas, which may focus solely on luxury, our Moroccan bath emphasizes skin care and the use of TRADITIONAL PRODUCTS. It's a holistic experience that goes beyond relaxation.",
+        "image": "moroccon-bath.png",
+        "pricing": [
+          { "duration": "Full Treatment", "price": "250 Qr" }
+        ]
+      },
+      {
+        "title": "Facial Treatment",
+        "category": "beauty",
+        "description": "Revitalizing facial care for glowing skin",
+        "image": "facial.png",
+        "pricing": [
+          { "duration": "30 min", "price": "80 Qr" },
+          { "duration": "60 min", "price": "120 Qr" }
+        ]
+      }
+    ],
+    "booking": {
+      "labels": {
+        "date": "Date",
+        "customerName": "Customer Name",
+        "nationality": "Nationality",
+        "mobile": "Mobile Number",
+        "knowFrom": "How did you know about us?",
+        "socialMedia": "Which social media?",
+        "healthConditions": "Health Conditions",
+        "implants": "Do you have any implants?",
+        "pressure": "Blood Pressure",
+        "skinType": "Skin Type",
+        "otherConcerns": "Other Concerns",
+        "promotional": "Receive promotional updates",
+        "signature": "Signature"
+      }
+    }
+  }

@@ -1,0 +1,107 @@
+{
+    "common": {
+      "title": "سبا بالانس",
+      "subtitle": "تجربة صحية فاخرة"
+    },
+    "services": [
+      {
+        "id": "moroccan",
+        "title": "حمام مغربي أصلي",
+        "description": "طقوس استحمام مغربية أصيلة",
+        "image": "moroccon-bath.png"
+      },
+      {
+        "id": "treatment",
+        "title": "خدمات العلاج",
+        "description": "جلسات مساج علاجي محترفة",
+        "image": "treatment-service.png"
+      },
+      {
+        "id": "beauty",
+        "title": "خدمات التجميل",
+        "description": "علاجات العناية الشاملة بالجسم",
+        "image": "beauty-service.png"
+      }
+    ],
+    "treatments": [
+      {
+        "title": "مساج تايلاندي",
+        "category": "treatment",
+        "description": "نوع من المساج الكامل للجسم يستخدم مزيجًا من ضغط الأنسجة العميقة وتمديد العضلات والمفاصل، وتعديلات لطيفة للجسم في أوضاع تشبه اليوجا",
+        "image": "thai-massage.png",
+        "pricing": [
+          { "duration": "٦٠ دقيقة", "price": "٢٢٠ ر.ق" },
+          { "duration": "٩٠ دقيقة", "price": "٢٥٠ ر.ق" },
+          { "duration": "ساعتين", "price": "٣٠٠ ر.ق" }
+        ]
+      },
+      {
+        "title": "مساج رياضي",
+        "category": "treatment",
+        "description": "نوع من المساج مصمم لمساعدة الرياضيين قبل وأثناء وبعد التدريب. يمكن أن يساعدك المساج الرياضي على: زيادة المرونة، منع الإصابات، تحسين الأداء",
+        "image": "sport-massage.png",
+        "pricing": [
+          { "duration": "٦٠ دقيقة", "price": "١٤٠ ر.ق" },
+          { "duration": "٩٠ دقيقة", "price": "١٨٥ ر.ق" },
+          { "duration": "١٢٠ دقيقة", "price": "٢٣٠ ر.ق" }
+        ]
+      },
+      {
+        "title": "مساج بالزيوت العطرية",
+        "category": "treatment",
+        "description": "يجمع بين قوة الزيوت الأساسية والعلاج بالمساج، مما يفيد العقل والجسم. إنها تجربة شاملة تهدف إلى تحسين صحتك الجسدية والعقلية",
+        "image": "aromatherapy.png",
+        "pricing": [
+          { "duration": "٦٠ دقيقة", "price": "١٣٠ ر.ق" },
+          { "duration": "٩٠ دقيقة", "price": "١٧٥ ر.ق" },
+          { "duration": "١٢٠ دقيقة", "price": "٢٢٠ ر.ق" }
+        ]
+      },
+      {
+        "title": "مساج سويدي",
+        "category": "treatment",
+        "description": "تقنيات المساج السويدي الكلاسيكية للاسترخاء التام",
+        "image": "swedishmassage.png",
+        "pricing": [
+          { "duration": "٦٠ دقيقة", "price": "١٠٠ ر.ق" },
+          { "duration": "٩٠ دقيقة", "price": "١٥٠ ر.ق" }
+        ]
+      },
+      {
+        "title": "حمام مغربي أصلي",
+        "category": "moroccan",
+        "description": "الحمام المغربي، المعروف أيضًا باسم الحمام، هو طقوس استحمام قديمة تم تقديرها لقرون في الثقافة المغربية. على عكس المنتجعات الصحية الأخرى التي قد تركز فقط على الرفاهية، فإن حمامنا المغربي يركز على العناية بالبشرة واستخدام المنتجات التقليدية. إنها تجربة شاملة تتجاوز الاسترخاء.",
+        "image": "moroccon-bath.png",
+        "pricing": [
+          { "duration": "العلاج الكامل", "price": "٢٥٠ ر.ق" }
+        ]
+      },
+      {
+        "title": "علاج الوجه",
+        "category": "beauty",
+        "description": "عناية منعشة للوجه لبشرة متوهجة",
+        "image": "facial.png",
+        "pricing": [
+          { "duration": "٣٠ دقيقة", "price": "٨٠ ر.ق" },
+          { "duration": "٦٠ دقيقة", "price": "١٢٠ ر.ق" }
+        ]
+      }
+    ],
+    "booking": {
+      "labels": {
+        "date": "التاريخ",
+        "customerName": "اسم العميل",
+        "nationality": "الجنسية",
+        "mobile": "رقم الجوال",
+        "knowFrom": "كيف عرفت عنا؟",
+        "socialMedia": "أي منصة تواصل اجتماعي؟",
+        "healthConditions": "حالات صحية",
+        "implants": "هل لديك أي غرسات؟",
+        "pressure": "ضغط الدم",
+        "skinType": "نوع البشرة",
+        "otherConcerns": "مخاوف أخرى",
+        "promotional": "تلقي التحديثات الترويجية",
+        "signature": "التوقيع"
+      }
+    }
+  }
