@@ -99,8 +99,8 @@
         "implants": "Do you have any implants?",
         "pressure": "Blood Pressure",
         "skinType": "Skin Type",
-        "otherConcerns": "Other Concerns",
-        "promotional": "Receive promotional updates",
+        "otherConcerns": "Do you have other concerns which may affect your treatment today? If yes please provide details.",
+        "promotional": "I do not wish to receive promotional material.",
         "signature": "Signature"
       }
     }

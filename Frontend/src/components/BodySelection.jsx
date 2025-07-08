@@ -59,7 +59,7 @@ const BodySelection = ({ selectedParts, setSelectedParts, language = 'en' }) => 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Front View */}
         <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-          <h3 className="text-center font-medium mb-3 text-white/80">
+          <h3 className="text-center font-medium mb-2 text-white/80">
             {translations.frontView}
           </h3>
           <div className="relative mx-auto" style={{ width: '100%', height: '400px' }}>
@@ -76,7 +76,7 @@ const BodySelection = ({ selectedParts, setSelectedParts, language = 'en' }) => 
 
         {/* Back View */}
         <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-          <h3 className="text-center font-medium mb-3 text-white/80">
+          <h3 className="text-center font-medium mb-2 text-white/80">
             {translations.backView}
           </h3>
           <div className="relative mx-auto" style={{ width: '100%', height: '400px' }}>

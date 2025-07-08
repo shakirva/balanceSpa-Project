@@ -3,8 +3,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Pagination } from 'antd';
 import {
-  FaPhone, FaSearch, FaRegEdit, FaRegTrashCan, FaRegFilePdf
+  FaPhone, FaSearch, FaRegEdit, FaRegFilePdf
 } from 'react-icons/fa';
+import { FaRegTrashCan } from "react-icons/fa6";
 import { generateAppointmentPDF } from '@utils/pdfGenerator';
 
 const Appointments = () => {

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import bodyFront from '../assets/body-forward.png';
 import bodyBack from '../assets/body-backward.png';
-
+import logo from "@assets/logo.png";
 const PDFPreviewPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -75,6 +75,15 @@ const PDFPreviewPage = () => {
     });
   };
 
+  // Replace CheckIcon with a checkbox style tick box
+  const CheckBoxTick = () => (
+    <span style={{ display: 'inline-block', width: 13, height: 13, border: '1px solid #121212', borderRadius: 3, marginRight: 6, verticalAlign: 'middle', position: 'relative' }}>
+      <svg width="12" height="12" viewBox="0 0 12 12" style={{ position: 'absolute', top: 0, left: 1 }}>
+        <polyline points="2,7 5,10 10,2" style={{ fill: 'none', stroke: '#121212', strokeWidth: 1.5 }} />
+      </svg>
+    </span>
+  );
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Print Header - Only visible on screen */}
@@ -102,7 +111,7 @@ const PDFPreviewPage = () => {
 
       {/* PDF Content - Optimized for single page */}
       <div
-        className="max-w-7xl mx-auto bg-white shadow-lg my-8 print:shadow-none print:my-0 print:max-w-none print:w-full"
+        className="max-w-7xl mx-auto bg-white shadow-lg my-6 print:shadow-none print:my-0 print:max-w-none print:w-full"
         style={{
           fontFamily: 'Arial, sans-serif',
           height: '297mm',
@@ -114,21 +123,29 @@ const PDFPreviewPage = () => {
         }}
       >
         <div className="p-6 print:p-4 w-full">
-          {/* Header */}
-          <div className="text-center mb-4 print:mb-3 border-b pb-3 print:pb-2">
-            <h1 className="text-2xl print:text-xl font-bold text-gray-800 mb-1">Balance SPA - Booking Form</h1>
-            <p className="text-sm print:text-xs text-gray-600">Consultation & Appointment Details</p>
-            
-          
-          </div>
+        
 
           {/* Two Column Layout - Robust for print */}
           <div className="flex flex-row w-full print:w-full gap-4 print:gap-2">
             {/* Left Column - Personal Details */}
-            <div className="space-y-3 print:space-y-2 w-1/2 print:w-1/2" style={{ breakInside: 'avoid' }}>
+            <div className=" w-1/2 print:w-1/2" style={{ breakInside: 'avoid' }}>
+            {/* logo */}
+            <div className='flex justify-center flex-col items-center'>
+            <img 
+                src={logo} 
+                alt="Balance Logo" x
+                className="w-24 invert"
+              />
+              <h1 className=" text-sm font-semibold capitalize -mt-4">BALANCE SPA</h1>
+              <h3 className='text-sm font-semibold capitalize mt-4 mb-4'>Customer Consultation</h3>
+            </div>
+           
               {/* Customer Details */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-md print:text-base font-bold text-gray-800 mb-2 print:mb-1 border-b pb-1">Customer</h2>
+                <div className="flex flex-row text-sm print:text-xs mb-1">
+                  <div className="font-bold w-32 text-left pr-2">Date:</div>
+                  <div className="flex-1 text-left">{formData.date || 'N/A'}</div>
+                </div>
                 <div className="flex flex-row text-sm print:text-xs mb-1">
                   <div className="font-bold w-32 text-left pr-2">Name:</div>
                   <div className="flex-1 text-left">{formData.name || 'N/A'}</div>
@@ -141,19 +158,6 @@ const PDFPreviewPage = () => {
                   <div className="font-bold w-32 text-left pr-2">Nationality:</div>
                   <div className="flex-1 text-left">{formData.nationality || 'N/A'}</div>
                 </div>
-              </div>
-
-              {/* Appointment Details */}
-              <div className=" p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-md print:text-base font-bold text-gray-800 mb-2 print:mb-1 border-b pb-1">Appointment Details</h2>
-                <div className="flex flex-row text-sm print:text-xs mb-1">
-                  <div className="font-bold w-32 text-left pr-2">Date:</div>
-                  <div className="flex-1 text-left">{formData.date || 'N/A'}</div>
-                </div>
-                <div className="flex flex-row text-sm print:text-xs mb-1">
-                  <div className="font-bold w-32 text-left pr-2">Time:</div>
-                  <div className="flex-1 text-left">{formData.time || 'N/A'}</div>
-                </div>
                 <div className="flex flex-row text-sm print:text-xs mb-1">
                   <div className="font-bold w-32 text-left pr-2">Service:</div>
                   <div className="flex-1 text-left">{formData.selectedService || 'N/A'}</div>
@@ -162,51 +166,86 @@ const PDFPreviewPage = () => {
                   <div className="font-bold w-32 text-left pr-2">Treatment:</div>
                   <div className="flex-1 text-left">{formData.selectedTreatment || 'N/A'}</div>
                 </div>
-                <div className="flex flex-row text-sm print:text-xs mb-1">
-                  <div className="font-bold w-32 text-left pr-2">Duration:</div>
-                  <div className="flex-1 text-left">{formData.selectedDuration || 'N/A'}</div>
-                </div>
-                <div className="flex flex-row text-sm print:text-xs mb-1">
-                  <div className="font-bold w-32 text-left pr-2">Price:</div>
-                  <div className="flex-1 text-left">{formData.selectedPrice ? `${formData.selectedPrice} Qr` : 'N/A'}</div>
-                </div>
               </div>
+
+         
 
               {/* How did you know about us? */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-md print:text-base font-bold text-gray-800 mb-2 print:mb-1 border-b pb-1">How did you know about us?</h2>
-                <div className="text-sm print:text-xs">
-                  {formData.knowFrom && formData.knowFrom.length > 0 ? formData.knowFrom.join(', ') : 'N/A'}
+                <h2 className="text-[14px] print:text-base font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">How did you know about us?</h2>
+                <div className="flex gap-2 flex-wrap text-sm print:text-xs">
+                  {Array.isArray(formData.knowFrom) && formData.knowFrom.length > 0 ? (
+                    formData.knowFrom.map((option) => (
+                      <span key={option} className="text-xs font-medium flex items-center mb-1 mr-4">
+                        <CheckBoxTick />{option}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-gray-500 italic text-sm">No selection</span>
+                  )}
                 </div>
               </div>
 
               {/* Social Media */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-md print:text-base font-bold text-gray-800 mb-2 print:mb-1 border-b pb-1">Social Media</h2>
-                <div className="text-sm print:text-xs">
-                  {formData.socialMedia && formData.socialMedia.length > 0 ? formData.socialMedia.join(', ') : 'N/A'}
+                <h2 className="text-[14px] print:text-base font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">Social Media</h2>
+                <div className="flex flex-wrap gap-2 text-sm print:text-xs">
+                  {Array.isArray(formData.socialMedia) && formData.socialMedia.length > 0 ? (
+                    formData.socialMedia.map((platform) => (
+                      <span key={platform} className="text-xs font-medium flex items-center mb-1 mr-4">
+                        <CheckBoxTick />{platform}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-gray-500 italic text-sm">No selection</span>
+                  )}
                 </div>
               </div>
 
               {/* Health Information */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-md print:text-base font-bold text-gray-800 mb-2 print:mb-1 border-b pb-1">Health Information</h2>
+                <h2 className="text-[14px] print:text-base font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">Customer Health Condition</h2>
                 <div className="flex flex-row text-sm print:text-xs mb-1">
-                  <div className="font-bold w-32 text-left pr-2">Health Conditions:</div>
-                  <div className="flex-1 text-left">{formData.healthConditions && formData.healthConditions.length > 0 ? formData.healthConditions.join(', ') : 'N/A'}</div>
+                  <div className="flex flex-col gap-1 text-sm print:text-xs">
+                    {Array.isArray(formData.healthConditions) && formData.healthConditions.length > 0 ? (
+                      formData.healthConditions.map((condition) => (
+                        <span key={condition} className="text-xs font-medium flex items-center mb-1 mr-4">
+                          <CheckBoxTick />{condition}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-gray-500 italic text-sm">No health conditions selected</span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex flex-row text-sm print:text-xs mb-1">
-                  <div className="font-bold w-32 text-left pr-2">Implants:</div>
+              </div>
+
+
+              {/* do you have */}
+
+              <div className="flex p-3 print:p-2 flex-col text-sm print:text-xs mb-1">
+                  <div className=" text-left pr-2">Do you have any implants? Please provide detail:</div>
                   <div className="flex-1 text-left">{formData.implants || 'N/A'}
                     {formData.implants && formData.implants.toLowerCase() === 'yes' && (
                       <span> ({formData.implantDetails || 'No details provided'})</span>
                     )}</div>
                 </div>
-                <div className="flex flex-row text-sm print:text-xs mb-1">
-                  <div className="font-bold w-32 text-left pr-2">Massage Pressure:</div>
-                  <div className="flex-1 text-left">{formData.pressure || 'N/A'}</div>
+
+                <div className="flex p-3 print:p-2 flex-col text-sm print:text-xs mb-1">
+                  <h4 className='text-[14px] font-bold mb-3'>For Massage Only:</h4>
+                  <div className="text-[13px] font-medium text-left pr-2">What type of massage pressure would you like during your massage?</div>
+                  <div className="mt-1">
+                    {formData.pressure ? (
+                      <span className="text-xs font-medium flex items-center mb-1 mr-4">
+                        <CheckBoxTick />{formData.pressure}
+                      </span>
+                    ) : (
+                      <span className="text-gray-500 italic text-sm">No selection</span>
+                    )}
+                  </div>
                 </div>
-              </div>
+
+              {/*  */}
 
 
            
@@ -218,17 +257,14 @@ const PDFPreviewPage = () => {
 
               {/* Body Visualization - Compact */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-md print:text-base font-bold text-gray-800 mb-2 print:mb-1 border-b pb-1">Body Areas</h2>
-                
                 <div className="grid grid-cols-2 gap-2">
                   {/* Front View */}
                   <div>
-                    <h3 className="font-semibold text-gray-700 mb-1 text-center text-sm">Front View</h3>
-                    <div className="relative mx-auto bg-white rounded overflow-hidden w-full max-w-[180px] print:max-w-[180px] h-auto" style={{ aspectRatio: '5/7' }}>
+                    <div className="relative mx-auto bg-white rounded w-full max-w-[180px] print:max-w-[180px] h-auto" style={{ aspectRatio: '5/7' }}>
                       <img 
                         src={bodyFront} 
                         alt="Body Front" 
-                        className="w-full h-auto object-contain" 
+                        className="w-full h-auto object-contain invert contrast-200" 
                       />
                       {BODY_PARTS.front.map(({ id, x, y, label }) => (
                         <div
@@ -256,12 +292,11 @@ const PDFPreviewPage = () => {
 
                   {/* Back View */}
                   <div>
-                    <h3 className="font-semibold text-gray-700 mb-1 text-center text-sm">Back View</h3>
-                    <div className="relative mx-auto bg-white rounded overflow-hidden w-full max-w-[180px] print:max-w-[180px] h-auto" style={{ aspectRatio: '5/7' }}>
+                    <div className="relative mx-auto bg-white rounded  w-full max-w-[180px] print:max-w-[180px] h-auto" style={{ aspectRatio: '5/7' }}>
                       <img 
                         src={bodyBack} 
                         alt="Body Back" 
-                        className="w-full h-auto object-contain" 
+                        className="w-full h-auto object-contain invert contrast-200" 
                       />
                       {BODY_PARTS.back.map(({ id, x, y, label }) => (
                         <div
@@ -290,7 +325,7 @@ const PDFPreviewPage = () => {
 
                 {/* Selected Body Parts List */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-md print:text-base font-bold text-gray-800 mb-2 print:mb-1 border-b pb-1">Selected Body Parts</h2>
+                <h2 className="text-[14px] print:text-base font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">Selected Body Parts</h2>
                 <div className="bg-white p-2 rounded">
                   {getSelectedPartLabels().length > 0 ? (
                     <div className="flex flex-wrap gap-1">
@@ -311,15 +346,21 @@ const PDFPreviewPage = () => {
 
                  {/* Skin Type */}
                  <div className="p-3 print:p-2 rounded print:rounded-none">
-                    <h2 className="text-md print:text-base font-bold text-gray-800 mb-2 print:mb-1 border-b pb-1">Skin Type</h2>
-                    <div className="text-sm print:text-xs">
-                      {formData.skinType || 'N/A'}
+                    <h2 className="text-[14px] print:text-base font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">What is your Skin Type</h2>
+                    <div className="text-sm print:text-xs mt-1">
+                      {formData.skinType ? (
+                        <span className="text-xs font-medium flex items-center mb-1 mr-4">
+                          <CheckBoxTick />{formData.skinType}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500 italic text-sm">No selection</span>
+                      )}
                     </div>
                   </div>
 
                    {/* Other Concerns */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-md print:text-base font-bold text-gray-800 mb-2 print:mb-1 border-b pb-1">Other Concerns</h2>
+                <h2 className="text-[13px] font-medium text-gray-800 mb-2 print:mb-1 border-b pb-1">Do you have other concerns which may affect your treatment today? If yes please provide details.</h2>
                 <div className="text-sm print:text-xs">
                   {formData.otherConcerns || 'N/A'}
                 </div>
@@ -328,16 +369,23 @@ const PDFPreviewPage = () => {
 
                      {/* Notes */}
               <div className="p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-md print:text-base font-bold text-gray-800 mb-2 print:mb-1 border-b pb-1">Notes</h2>
-                <div className="text-sm print:text-xs">
-                  {formData.notes || formData.otherConcerns || 'N/A'}
-                </div>
+                <h2 className="text-[13px] print:text-base font-semibold text-gray-800">Notes: <span> Sexual behavior is prohibited by law and will not be tolerated by the management and the Authority.</span>  </h2>         
               </div>
+
+              {/* content-note */}
+
+              <div className="text-sm  p-3 mb-4" style={{ color: '#18181b', }}>
+                {formData.language === 'ar'
+                  ? 'لقد قرأت الموقع أدناه وفهمت المحتويات والشروط المذكورة أعلاه. أوافق على أن المنتجع الصحي غير مسؤول عن أي حالة ناتجة عن العلاج.'
+                  : 'The undersigned has read and understood the above contents and terms. The undersigned represent that the information provided is true and accurate and understands the importance of alerting the staff to any medical conditions or concern. The spa reserves the right to refuse treatment. I agree that either the spa, not its employee or management shall be liable or responsible for aggravation of any existing conditions as a result of my treatment. I am voluntarily undertaking this treatment.'}
+              </div>
+
+              {/*  */}
 
               
               {/* Signature */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-md print:text-base font-bold text-gray-800 mb-2 print:mb-1 border-b pb-1">Customer Signature</h2>
+                <h2 className="text-[14px] font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">Customer Signature</h2>
                 {formData.signature ? (
                   <div className="border border-gray-300 p-2 rounded bg-white">
                     <img 
@@ -356,11 +404,6 @@ const PDFPreviewPage = () => {
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="mt-4 pt-3 border-t text-center text-gray-600 text-xs">
-            <p>This form was generated on {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}</p>
-            <p className="mt-1">Balance SPA - Consultation Form</p>
-          </div>
         </div>
       </div>
     </div>

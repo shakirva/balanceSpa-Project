@@ -86,16 +86,28 @@ const BrochureDisplay = () => {
 
       {/* Floating Action Button */}
       <div className={`absolute top-6 ${selectedLanguage === 'ar' ? 'left-8' : 'right-8'}`}>
+        <div className='flex gap-2'>
         <button
            onClick={() => setShowModal(true)}
-          className="bg-white flex gap-1 hover:bg-blue-700 text-black rounded-full px-4 py-3 shadow-lg transition-all duration-300 transform hover:scale-105"
+          className=" border border-[#fff] flex gap-1 text-white hover:bg-blue-700 text-black rounded-full px-6 py-3 shadow-lg transition-all duration-300 transform hover:scale-105"
         >
-          <svg width="24" height="24" fill="#000000" viewBox="0 0 24 24">
-            <path fillRule="evenodd" d="M7.75 7.5a4.25 4.25 0 1 1 8.5 0 4.25 4.25 0 0 1-8.5 0ZM12 4.75a2.75 2.75 0 1 0 0 5.5 2.75 2.75 0 0 0 0-5.5Z" clipRule="evenodd" />
-            <path fillRule="evenodd" d="M8 14.75A2.25 2.25 0 0 0 5.75 17v1.188c0 .018.013.034.031.037 4.119.672 8.32.672 12.438 0a.037.037 0 0 0 .031-.037V17A2.25 2.25 0 0 0 16 14.75h-.34a.253.253 0 0 0-.079.012l-.865.283a8.751 8.751 0 0 1-5.432 0l-.866-.283a.252.252 0 0 0-.077-.012H8ZM4.25 17A3.75 3.75 0 0 1 8 13.25h.34c.185 0 .369.03.544.086l.866.283a7.251 7.251 0 0 0 4.5 0l.866-.283c.175-.057.359-.086.543-.086H16A3.75 3.75 0 0 1 19.75 17v1.188c0 .754-.546 1.396-1.29 1.517a40.095 40.095 0 0 1-12.92 0 1.537 1.537 0 0 1-1.29-1.517V17Z" clipRule="evenodd" />
-          </svg>
           <span>{selectedLanguage === 'ar' ? 'مستخدم حالي' : 'Existing User'}</span>
         </button>
+        <button
+            onClick={() =>
+              navigate('/booking', {
+                state: {
+                  language: selectedLanguage,
+                },
+              })
+            }
+          className="bg-white flex gap-1 hover:bg-blue-700 text-black rounded-full px-6 py-3 shadow-lg transition-all duration-300 transform hover:scale-105"
+        >
+          <span>{selectedLanguage === 'ar' ? 'مستخدم حالي' : 'Register Now'}</span>
+        </button>
+          
+        </div>
+        
       </div>
 
 
@@ -103,13 +115,15 @@ const BrochureDisplay = () => {
       </div>
 
       <div className="container mx-auto p-10">
-        <h1 className="text-2xl font-bold text-white text-left mb-8 capitalize">
+        <h1 className="text-2xl font-bold text-white text-left mb-4 capitalize">
           {currentCategory?.title || selectedCategory}
         </h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredTreatments.map((treatment, index) => (
-            <div key={index} className="bg-zinc-900 rounded-xl p-3 overflow-hidden text-white shadow-lg">
+            <div key={index} className="bg-zinc-900 rounded-xl p-3 overflow-hidden text-white shadow-lg cursor-pointer" onClick={() =>
+                    navigate('/booking', { state: { language: selectedLanguage } })
+                  }>
               <img
                 src={treatment.image === 'thai-massage.png' ? thaiMassage : serviceImages[selectedCategory]}
                 alt={treatment.title}
@@ -126,14 +140,7 @@ const BrochureDisplay = () => {
                     </li>
                   ))}
                 </ul>
-                <button
-                  className="bg-white text-black px-6 py-2 w-full rounded-md hover:bg-gray-200 transition"
-                  onClick={() =>
-                    navigate('/booking', { state: { language: selectedLanguage } })
-                  }
-                >
-                  {selectedLanguage === 'ar' ? 'احجز الآن ←' : 'Book Now →'}
-                </button>
+               
               </div>
             </div>
           ))}
