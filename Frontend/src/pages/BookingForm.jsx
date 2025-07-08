@@ -189,9 +189,33 @@ const BookingForm = () => {
                     </div>
                     <div className="mb-4">
                   <label className="block font-semibold mb-2">Selected Service</label>
-                  <div className="bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white">
-                    {formData.selectedService || 'No service selected'}
+                  <select
+                    name="selectedService"
+                    value={formData.selectedService}
+                    onChange={handleChange}
+                    className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
+                  >
+                    <option value="">Select a service</option>
+                    <option value="Massage">Massage</option>
+                    <option value="Facial">Facial</option>
+                    <option value="Body Scrub">Body Scrub</option>
+                    {/* Add more services as needed */}
+                  </select>
                   </div>
+                  <div className="mb-4">
+                  <label className="block font-semibold mb-2">Select Treatment</label>
+                  <select
+                    name="selectedTreatment"
+                    value={formData.selectedTreatment}
+                    onChange={handleChange}
+                    className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
+                  >
+                    <option value="">Select a treatment</option>
+                    <option value="Aromatherapy">Aromatherapy</option>
+                    <option value="Deep Tissue">Deep Tissue</option>
+                    <option value="Brightening Facial">Brightening Facial</option>
+                    {/* Add more treatments as needed */}
+                  </select>
                   </div>
                   <div>
                   <label className="block font-semibold mb-2">

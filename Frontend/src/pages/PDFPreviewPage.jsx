@@ -160,11 +160,27 @@ const PDFPreviewPage = () => {
                 </div>
                 <div className="flex flex-row text-sm print:text-xs mb-1">
                   <div className="font-bold w-32 text-left pr-2">Service:</div>
-                  <div className="flex-1 text-left">{formData.selectedService || 'N/A'}</div>
+                  <div className="flex-1 text-left flex items-center">
+                    {formData.selectedService ? (
+                      <span className="text-xs font-medium flex items-center mb-1 mr-4">
+                        {formData.selectedService}
+                      </span>
+                    ) : (
+                      <span className="text-gray-500 italic text-sm">N/A</span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-row text-sm print:text-xs mb-1">
                   <div className="font-bold w-32 text-left pr-2">Treatment:</div>
-                  <div className="flex-1 text-left">{formData.selectedTreatment || 'N/A'}</div>
+                  <div className="flex-1 text-left flex items-center">
+                    {formData.selectedTreatment ? (
+                      <span className="text-xs font-medium flex items-center mb-1 mr-4">
+                        {formData.selectedTreatment}
+                      </span>
+                    ) : (
+                      <span className="text-gray-500 italic text-sm">N/A</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -225,7 +241,7 @@ const PDFPreviewPage = () => {
 
               <div className="flex p-3 print:p-2 flex-col text-sm print:text-xs mb-1">
                   <div className=" text-left pr-2">Do you have any implants? Please provide detail:</div>
-                  <div className="flex-1 text-left">{formData.implants || 'N/A'}
+                  <div className="flex-1 text-left mt-2">{formData.implants || 'N/A'}
                     {formData.implants && formData.implants.toLowerCase() === 'yes' && (
                       <span> ({formData.implantDetails || 'No details provided'})</span>
                     )}</div>
