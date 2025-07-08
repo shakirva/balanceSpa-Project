@@ -137,7 +137,7 @@ const PDFPreviewPage = () => {
                 className="w-24 invert"
               />
               <h1 className=" text-sm font-semibold capitalize -mt-4">BALANCE SPA</h1>
-              <h3 className='text-sm font-semibold capitalize mt-4 mb-4'>Customer Consultation</h3>
+              <h3 className='text-sm font-semibold capitalize mt-2 mb-4'>Customer Consultation</h3>
             </div>
            
               {/* Customer Details */}
