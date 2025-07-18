@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getTranslations } from '../utils/translations';
 import BodySelection from '@components/BodySelection';
-import SignaturePad from 'react-signature-canvas';
+import SignaturePad from 'react-signature-pad-wrapper';
+
 import { useRef } from 'react';
 import { generateAppointmentPDF } from '@utils/pdfGenerator';
 
@@ -66,23 +67,31 @@ const BookingForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Get signature as data URL
-    const signatureDataUrl = sigPadRef.current.isEmpty() ? '' : sigPadRef.current.getTrimmedCanvas().toDataURL('image/png');
-
-    // Prepare data for PDF preview
+  
+    let signatureDataUrl = ''; // ✅ define this first
+    if (sigPadRef.current) {
+      signatureDataUrl = sigPadRef.current.toDataURL();
+    }
+  
     const pdfData = {
       ...formData,
       signature: signatureDataUrl,
       language: selectedLanguage,
     };
-
-    // Navigate to PDF preview page
+  
     navigate('/pdf-preview', { state: { formData: pdfData } });
   };
   
+  
 
   const sigPadRef = useRef();
+
+  // Only clear the pad on clear button
+  const handleClearSignature = () => {
+    if (sigPadRef.current) {
+      sigPadRef.current.clear();
+    }
+  };
 
   const checkboxClass = (isActive) =>
     `flex items-center gap-2 px-4 py-2 rounded-full border transition text-sm font-medium cursor-pointer ${
@@ -498,19 +507,26 @@ const BookingForm = () => {
                 <div className="mt-4">
                   <label className="block font-semibold mb-2">{translations.labels.signature}</label>
                   <div className="border border-zinc-700 rounded bg-white">
-                    <SignaturePad
+                  <SignaturePad
                       ref={sigPadRef}
+                      options={{
+                        minWidth: 1,
+                        maxWidth: 2.5,
+                        penColor: "black",
+                        backgroundColor: "white"
+                      }}
                       canvasProps={{
                         width: 500,
                         height: 200,
                         className: "signatureCanvas w-full"
                       }}
                     />
+
                   </div>
                   <div className="flex justify-between mt-2">
                     <button
                       type="button"
-                      onClick={() => sigPadRef.current.clear()}
+                      onClick={handleClearSignature}
                       className="bg-zinc-700 text-white px-3 py-1 rounded hover:bg-red-600"
                     >
                       {selectedLanguage === 'ar' ? 'مسح' : 'Clear'}
