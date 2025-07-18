@@ -2,6 +2,7 @@ import { X } from 'lucide-react';
 import ImageHotspot from './ImageHotspot';
 import bodyFront from '../assets/body-forward.png';
 import bodyBack from '../assets/body-backward.png';
+import { getTranslations } from '../utils/translations';
 
 // Coordinates for both views with updated labels
 const BODY_PARTS = {
@@ -40,17 +41,17 @@ const BODY_PARTS = {
 };
 
 const BodySelection = ({ selectedParts, setSelectedParts, language = 'en' }) => {
-  const removePart = (partId) => {
-    setSelectedParts(selectedParts.filter(id => id !== partId));
-  };
-
-  // Translation for UI elements
-  const translations = {
+  const translations = getTranslations(language);
+  const bodyPartsLabels = translations.booking.labels.bodyParts;
+  const uiLabels = translations.booking?.labels?.bodySelection || {
     frontView: language === 'ar' ? 'الواجهة الأمامية' : 'Front View',
     backView: language === 'ar' ? 'الواجهة الخلفية' : 'Back View',
     selectedAreas: language === 'ar' ? 'المناطق المحددة' : 'Selected Areas',
     clickToSelect: language === 'ar' ? 'انقر على مناطق الجسم لتحديدها' : 'Click on body areas to select',
     areasWillAppear: language === 'ar' ? '(ستظهر المناطق هنا)' : '(Areas will appear here)'
+  };
+  const removePart = (partId) => {
+    setSelectedParts(selectedParts.filter(id => id !== partId));
   };
 
   return (
@@ -60,12 +61,12 @@ const BodySelection = ({ selectedParts, setSelectedParts, language = 'en' }) => 
         {/* Front View */}
         <div className="bg-white/5 p-4 rounded-xl border border-white/10">
           <h3 className="text-center font-medium mb-2 text-white/80">
-            {translations.frontView}
+            {uiLabels.frontView}
           </h3>
           <div className="relative mx-auto" style={{ width: '100%', height: '400px' }}>
             <ImageHotspot
               src={bodyFront}
-              hotspots={BODY_PARTS.front}
+              hotspots={BODY_PARTS.front.map(part => ({ ...part, label: bodyPartsLabels[part.id] || part.id }))}
               selected={selectedParts}
               onChange={setSelectedParts}
               selectedColor="rgba(74, 222, 128, 0.6)" // Green-400 with 60% opacity
@@ -77,12 +78,12 @@ const BodySelection = ({ selectedParts, setSelectedParts, language = 'en' }) => 
         {/* Back View */}
         <div className="bg-white/5 p-4 rounded-xl border border-white/10">
           <h3 className="text-center font-medium mb-2 text-white/80">
-            {translations.backView}
+            {uiLabels.backView}
           </h3>
           <div className="relative mx-auto" style={{ width: '100%', height: '400px' }}>
             <ImageHotspot
               src={bodyBack}
-              hotspots={BODY_PARTS.back}
+              hotspots={BODY_PARTS.back.map(part => ({ ...part, label: bodyPartsLabels[part.id] || part.id }))}
               selected={selectedParts}
               onChange={setSelectedParts}
               selectedColor="rgba(74, 222, 128, 0.6)"
@@ -96,7 +97,7 @@ const BodySelection = ({ selectedParts, setSelectedParts, language = 'en' }) => 
       <div className="p-4 rounded-xl border border-white/10 bg-zinc-900/50">
         <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-          {translations.selectedAreas}
+          {uiLabels.selectedAreas}
           <span className="text-xs ml-auto text-green-400">
             {selectedParts.length} {language === 'ar' ? 'محدد' : 'selected'}
           </span>
@@ -104,32 +105,28 @@ const BodySelection = ({ selectedParts, setSelectedParts, language = 'en' }) => 
         
         {selectedParts.length > 0 ? (
           <div className="flex flex-wrap gap-3">
-            {selectedParts.map(partId => {
-              const allParts = [...BODY_PARTS.front, ...BODY_PARTS.back];
-              const part = allParts.find(p => p.id === partId);
-              return (
-                <div 
-                  key={partId} 
-                  className="bg-green-900/30 text-green-100 px-3 py-2 rounded-lg text-sm flex items-center gap-2 group border border-green-800/50 hover:bg-green-900/50 transition-colors"
+            {selectedParts.map(partId => (
+              <div 
+                key={partId} 
+                className="bg-green-900/30 text-green-100 px-3 py-2 rounded-lg text-sm flex items-center gap-2 group border border-green-800/50 hover:bg-green-900/50 transition-colors"
+              >
+                {bodyPartsLabels[partId] || partId}
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removePart(partId);
+                  }}
+                  className="opacity-70 hover:opacity-100 transition-opacity text-green-300 hover:text-white"
                 >
-                  {part?.label || partId}
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removePart(partId);
-                    }}
-                    className="opacity-70 hover:opacity-100 transition-opacity text-green-300 hover:text-white"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              );
-            })}
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="text-center py-4 text-white/50">
-            <p>{translations.clickToSelect}</p>
-            <p className="text-xs mt-1">{translations.areasWillAppear}</p>
+            <p>{uiLabels.clickToSelect}</p>
+            <p className="text-xs mt-1">{uiLabels.areasWillAppear}</p>
           </div>
         )}
       </div>

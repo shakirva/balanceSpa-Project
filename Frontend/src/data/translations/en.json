@@ -104,7 +104,37 @@
         "signature": "Signature",
         "selectedBodyParts": "Selected Body Parts",
         "notesWarning": "Sexual behavior is prohibited by law and will not be tolerated by the management and the Authority.",
-        "consentText": "The undersigned has read and understood the above contents and terms. The undersigned represent that the information provided is true and accurate and understands the importance of alerting the staff to any medical conditions or concern. The spa reserves the right to refuse treatment. I agree that either the spa, not its employee or management shall be liable or responsible for aggravation of any existing conditions as a result of my treatment. I am voluntarily undertaking this treatment."
+        "consentText": "The undersigned has read and understood the above contents and terms. The undersigned represent that the information provided is true and accurate and understands the importance of alerting the staff to any medical conditions or concern. The spa reserves the right to refuse treatment. I agree that either the spa, not its employee or management shall be liable or responsible for aggravation of any existing conditions as a result of my treatment. I am voluntarily undertaking this treatment.",
+        "bodyParts": {
+          "head_front": "Head",
+          "neck_front": "Neck",
+          "left_shoulder": "Left Shoulder",
+          "right_shoulder": "Right Shoulder",
+          "chest": "Chest",
+          "abdomen": "Abdomen",
+          "left_arm_front": "Left Arm",
+          "right_arm_front": "Right Arm",
+          "left_wrist": "Left Wrist",
+          "right_wrist": "Right Wrist",
+          "left_leg_front": "Left Thigh",
+          "right_leg_front": "Right Thigh",
+          "left_foot": "Left Leg",
+          "right_foot": "Right Leg",
+          "head_back": "Head",
+          "neck_back": "Neck",
+          "left_back_shoulders": "Left Back Shoulders",
+          "right_back_shoulders": "Right Back Shoulders",
+          "left_back_wrist": "Left Back Wrist",
+          "right_back_wrist": "Right Back Wrist",
+          "upper_back": "Upper Back",
+          "lower_back": "Lower Back",
+          "left_back_thigh": "Left Back Thigh",
+          "Right_back_thigh": "Right Back Thigh",
+          "left_arm_back": "Left Back Arm",
+          "right_arm_back": "Right Back Arm",
+          "left_leg_back": "Left Back Leg",
+          "right_leg_back": "Right Back Leg"
+        }
       },
       "bookingDropdowns": {
         "service": [

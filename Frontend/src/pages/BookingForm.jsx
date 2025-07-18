@@ -276,13 +276,7 @@ const BookingForm = () => {
                     </div>
 
                     <div>
-                    <label className="block font-semibold mb-2">Start Time</label>
-                    <input
-                      type="time"
-                      name="time"
-                      className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
-                      onChange={handleChange}
-                    />
+                    
                   </div>
 
                   

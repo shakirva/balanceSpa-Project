@@ -75,17 +75,13 @@ const PDFPreviewPage = () => {
     ]
   };
 
-  // Get body part labels for selected parts
+  // Get body part labels for selected parts (language-aware)
+  const bodyPartsLabels = translations.booking.labels.bodyParts;
   const getSelectedPartLabels = () => {
     if (!formData.selectedBodyParts || formData.selectedBodyParts.length === 0) {
       return [];
     }
-    
-    const allParts = [...BODY_PARTS.front, ...BODY_PARTS.back];
-    return formData.selectedBodyParts.map(partId => {
-      const part = allParts.find(p => p.id === partId);
-      return part?.label || partId;
-    });
+    return formData.selectedBodyParts.map(partId => bodyPartsLabels[partId] || partId);
   };
 
   // Replace CheckIcon with a checkbox style tick box
