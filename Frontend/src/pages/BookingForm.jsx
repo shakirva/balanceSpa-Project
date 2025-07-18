@@ -196,35 +196,35 @@ const BookingForm = () => {
                         className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
                       />
                     </div>
-                    <div className="mb-4">
-                  <label className="block font-semibold mb-2">Selected Service</label>
-                  <select
-                    name="selectedService"
-                    value={formData.selectedService}
-                    onChange={handleChange}
-                    className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
-                  >
-                    <option value="">Select a service</option>
-                    <option value="Massage">Massage</option>
-                    <option value="Facial">Facial</option>
-                    <option value="Body Scrub">Body Scrub</option>
-                    {/* Add more services as needed */}
-                  </select>
+                  <div className="mb-4">
+                    <label className="block font-semibold mb-2">
+                      {selectedLanguage === 'ar' ? 'اختر الخدمة' : 'Select Service'}
+                    </label>
+                    <select
+                      name="selectedService"
+                      value={formData.selectedService}
+                      onChange={handleChange}
+                      className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
+                    >
+                      {translations.bookingDropdowns.service.map(option => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="mb-4">
-                  <label className="block font-semibold mb-2">Select Treatment</label>
-                  <select
-                    name="selectedTreatment"
-                    value={formData.selectedTreatment}
-                    onChange={handleChange}
-                    className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
-                  >
-                    <option value="">Select a treatment</option>
-                    <option value="Aromatherapy">Aromatherapy</option>
-                    <option value="Deep Tissue">Deep Tissue</option>
-                    <option value="Brightening Facial">Brightening Facial</option>
-                    {/* Add more treatments as needed */}
-                  </select>
+                    <label className="block font-semibold mb-2">
+                      {selectedLanguage === 'ar' ? 'اختر العلاج' : 'Select Treatment'}
+                    </label>
+                    <select
+                      name="selectedTreatment"
+                      value={formData.selectedTreatment}
+                      onChange={handleChange}
+                      className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
+                    >
+                      {translations.bookingDropdowns.treatment.map(option => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                   <label className="block font-semibold mb-2">
@@ -490,7 +490,7 @@ const BookingForm = () => {
 
                 <div className="text-sm border border-zinc-700 p-3 rounded bg-zinc-800 mb-4">
                   {selectedLanguage === 'ar' ? 
-                    'لقد قرأت الموقع أدناه وفهمت المحتويات والشروط المذكورة أعلاه. أوافق على أن المنتجع الصحي غير مسؤول عن أي حالة ناتجة عن العلاج.' : 
+                    'لقد قرأت الموقع أدناه وفهمت المحتويات والشروط المذكورة أعلاه. أوافق على أن المنتجع الصحي غير مسؤول عن أي حالة ناتجة عن العلاج.لقد قرأت الموقع أدناه وفهمت المحتويات والشروط المذكورة أعلاه. أوافق على أن المنتجع الصحي غير مسؤول عن أي حالة ناتجة عن العلاج. أقر بأن المعلومات المقدمة صحيحة ودقيقة وأفهم أهمية إبلاغ الموظفين بأي حالات طبية أو مخاوف. يحتفظ المنتجع بالحق في رفض العلاج. أوافق على أن المنتجع أو موظفيه أو إدارته لن يكونوا مسؤولين عن تفاقم أي حالة موجودة نتيجة علاجي. أتحمل هذا العلاج طوعً' : 
                     'The undersigned has read and understood the above contents and terms. The undersigned represent that the information provided is true and accurate and understands the importance of alerting the staff to any medical conditions or concern. The spa reserves the right to refuse treatment. I agree that either the spa, not its employee or management shall be liable or responsible for aggravation of any existing conditions as a result of my treatment. I am voluntarily undertaking this treatment.'}
                 </div>
 

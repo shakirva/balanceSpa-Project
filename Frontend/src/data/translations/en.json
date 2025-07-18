@@ -101,7 +101,24 @@
         "skinType": "Skin Type",
         "otherConcerns": "Do you have other concerns which may affect your treatment today? If yes please provide details.",
         "promotional": "I do not wish to receive promotional material.",
-        "signature": "Signature"
+        "signature": "Signature",
+        "selectedBodyParts": "Selected Body Parts",
+        "notesWarning": "Sexual behavior is prohibited by law and will not be tolerated by the management and the Authority.",
+        "consentText": "The undersigned has read and understood the above contents and terms. The undersigned represent that the information provided is true and accurate and understands the importance of alerting the staff to any medical conditions or concern. The spa reserves the right to refuse treatment. I agree that either the spa, not its employee or management shall be liable or responsible for aggravation of any existing conditions as a result of my treatment. I am voluntarily undertaking this treatment."
+      },
+      "bookingDropdowns": {
+        "service": [
+          { "value": "", "label": "Select a service" },
+          { "value": "Massage", "label": "Massage" },
+          { "value": "Facial", "label": "Facial" },
+          { "value": "Body Scrub", "label": "Body Scrub" }
+        ],
+        "treatment": [
+          { "value": "", "label": "Select a treatment" },
+          { "value": "Aromatherapy", "label": "Aromatherapy" },
+          { "value": "Deep Tissue", "label": "Deep Tissue" },
+          { "value": "Brightening Facial", "label": "Brightening Facial" }
+        ]
       }
     }
   }

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import bodyFront from '../assets/body-forward.png';
 import bodyBack from '../assets/body-backward.png';
 import logo from "@assets/logo.png";
+import { getTranslations } from '../utils/translations';
 const PDFPreviewPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -25,6 +26,11 @@ const PDFPreviewPage = () => {
   if (!formData) {
     return null;
   }
+
+  // Get translations based on selected language
+  const translations = getTranslations(formData.language || 'en');
+  const bookingLabels = translations.booking.labels;
+  const bookingDropdowns = translations.booking.bookingDropdowns;
 
   // Debug: Log signature data
   console.log('Signature data:', formData.signature);
@@ -150,27 +156,27 @@ const PDFPreviewPage = () => {
               {/* Customer Details */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
                 <div className="flex flex-row text-sm print:text-xs mb-1">
-                  <div className="font-bold w-32 text-left pr-2">Date:</div>
+                  <div className="font-bold w-32 text-left pr-2">{bookingLabels.date}:</div>
                   <div className="flex-1 text-left">{formData.date || 'N/A'}</div>
                 </div>
                 <div className="flex flex-row text-sm print:text-xs mb-1">
-                  <div className="font-bold w-32 text-left pr-2">Name:</div>
+                  <div className="font-bold w-32 text-left pr-2">{bookingLabels.customerName}:</div>
                   <div className="flex-1 text-left">{formData.name || 'N/A'}</div>
                 </div>
                 <div className="flex flex-row text-sm print:text-xs mb-1">
-                  <div className="font-bold w-32 text-left pr-2">Phone:</div>
+                  <div className="font-bold w-32 text-left pr-2">{bookingLabels.mobile}:</div>
                   <div className="flex-1 text-left">{formData.mobile || 'N/A'}</div>
                 </div>
                 <div className="flex flex-row text-sm print:text-xs mb-1">
-                  <div className="font-bold w-32 text-left pr-2">Nationality:</div>
+                  <div className="font-bold w-32 text-left pr-2">{bookingLabels.nationality}:</div>
                   <div className="flex-1 text-left">{formData.nationality || 'N/A'}</div>
                 </div>
                 <div className="flex flex-row text-sm print:text-xs mb-1">
-                  <div className="font-bold w-32 text-left pr-2">Service:</div>
+                  <div className="font-bold w-32 text-left pr-2">{translations.booking.labels.service}:</div>
                   <div className="flex-1 text-left flex items-center">
                     {formData.selectedService ? (
                       <span className="text-xs font-medium flex items-center mb-1 mr-4">
-                        {formData.selectedService}
+                        {bookingDropdowns.service.find(opt => opt.value === formData.selectedService)?.label || formData.selectedService}
                       </span>
                     ) : (
                       <span className="text-gray-500 italic text-sm">N/A</span>
@@ -178,11 +184,11 @@ const PDFPreviewPage = () => {
                   </div>
                 </div>
                 <div className="flex flex-row text-sm print:text-xs mb-1">
-                  <div className="font-bold w-32 text-left pr-2">Treatment:</div>
+                  <div className="font-bold w-32 text-left pr-2">{translations.booking.labels.treatment}:</div>
                   <div className="flex-1 text-left flex items-center">
                     {formData.selectedTreatment ? (
                       <span className="text-xs font-medium flex items-center mb-1 mr-4">
-                        {formData.selectedTreatment}
+                        {bookingDropdowns.treatment.find(opt => opt.value === formData.selectedTreatment)?.label || formData.selectedTreatment}
                       </span>
                     ) : (
                       <span className="text-gray-500 italic text-sm">N/A</span>
@@ -195,7 +201,7 @@ const PDFPreviewPage = () => {
 
               {/* How did you know about us? */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-[14px] print:text-base font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">How did you know about us?</h2>
+                <h2 className="text-[14px] print:text-base font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">{bookingLabels.knowFrom}</h2>
                 <div className="flex gap-2 flex-wrap text-sm print:text-xs">
                   {Array.isArray(formData.knowFrom) && formData.knowFrom.length > 0 ? (
                     formData.knowFrom.map((option) => (
@@ -211,7 +217,7 @@ const PDFPreviewPage = () => {
 
               {/* Social Media */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-[14px] print:text-base font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">Social Media</h2>
+                <h2 className="text-[14px] print:text-base font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">{bookingLabels.socialMedia}</h2>
                 <div className="flex flex-wrap gap-2 text-sm print:text-xs">
                   {Array.isArray(formData.socialMedia) && formData.socialMedia.length > 0 ? (
                     formData.socialMedia.map((platform) => (
@@ -227,7 +233,7 @@ const PDFPreviewPage = () => {
 
               {/* Health Information */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-[14px] print:text-base font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">Customer Health Condition</h2>
+                <h2 className="text-[14px] print:text-base font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">{bookingLabels.healthConditions}</h2>
                 <div className="flex flex-row text-sm print:text-xs mb-1">
                   <div className="flex flex-col gap-1 text-sm print:text-xs">
                     {Array.isArray(formData.healthConditions) && formData.healthConditions.length > 0 ? (
@@ -247,7 +253,7 @@ const PDFPreviewPage = () => {
               {/* do you have */}
 
               <div className="flex p-3 print:p-2 flex-col text-sm print:text-xs mb-1">
-                  <div className=" text-left pr-2">Do you have any implants? Please provide detail:</div>
+                  <div className=" text-left pr-2">{bookingLabels.implants}</div>
                   <div className="flex-1 text-left mt-2">{formData.implants || 'N/A'}
                     {formData.implants && formData.implants.toLowerCase() === 'yes' && (
                       <span> ({formData.implantDetails || 'No details provided'})</span>
@@ -255,8 +261,8 @@ const PDFPreviewPage = () => {
                 </div>
 
                 <div className="flex p-3 print:p-2 flex-col text-sm print:text-xs mb-1">
-                  <h4 className='text-[14px] font-bold mb-3'>For Massage Only:</h4>
-                  <div className="text-[13px] font-medium text-left pr-2">What type of massage pressure would you like during your massage?</div>
+                  <h4 className='text-[14px] font-bold mb-3'>{formData.language === 'ar' ? 'للمساج فقط' : 'For Massage Only:'}</h4>
+                  <div className="text-[13px] font-medium text-left pr-2">{bookingLabels.pressure}</div>
                   <div className="mt-1">
                     {formData.pressure ? (
                       <span className="text-xs font-medium flex items-center mb-1 mr-4">
@@ -348,7 +354,7 @@ const PDFPreviewPage = () => {
 
                 {/* Selected Body Parts List */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-[14px] print:text-base font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">Selected Body Parts</h2>
+                <h2 className="text-[14px] print:text-base font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">{bookingLabels.selectedBodyParts || (formData.language === 'ar' ? 'الأجزاء المحددة من الجسم' : 'Selected Body Parts')}</h2>
                 <div className="bg-white p-2 rounded">
                   {getSelectedPartLabels().length > 0 ? (
                     <div className="flex flex-wrap gap-1">
@@ -369,7 +375,7 @@ const PDFPreviewPage = () => {
 
                  {/* Skin Type */}
                  <div className="p-3 print:p-2 rounded print:rounded-none">
-                    <h2 className="text-[14px] print:text-base font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">What is your Skin Type</h2>
+                    <h2 className="text-[14px] print:text-base font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">{bookingLabels.skinType}</h2>
                     <div className="text-sm print:text-xs mt-1">
                       {formData.skinType ? (
                         <span className="text-xs font-medium flex items-center mb-1 mr-4">
@@ -383,7 +389,7 @@ const PDFPreviewPage = () => {
 
                    {/* Other Concerns */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-[13px] font-medium text-gray-800 mb-2 print:mb-1 border-b pb-1">Do you have other concerns which may affect your treatment today? If yes please provide details.</h2>
+                <h2 className="text-[13px] font-medium text-gray-800 mb-2 print:mb-1 border-b pb-1">{bookingLabels.otherConcerns}</h2>
                 <div className="text-sm print:text-xs">
                   {formData.otherConcerns || 'N/A'}
                 </div>
@@ -392,15 +398,13 @@ const PDFPreviewPage = () => {
 
                      {/* Notes */}
               <div className="p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-[13px] print:text-base font-semibold text-gray-800">Notes: <span> Sexual behavior is prohibited by law and will not be tolerated by the management and the Authority.</span>  </h2>         
+                <h2 className="text-[13px] print:text-base font-semibold text-gray-800">{formData.language === 'ar' ? 'ملاحظة:' : 'Notes:'} <span> {bookingLabels.notesWarning}</span></h2>         
               </div>
 
               {/* content-note */}
 
               <div className="text-sm  p-3 mb-4" style={{ color: '#18181b', }}>
-                {formData.language === 'ar'
-                  ? 'لقد قرأت الموقع أدناه وفهمت المحتويات والشروط المذكورة أعلاه. أوافق على أن المنتجع الصحي غير مسؤول عن أي حالة ناتجة عن العلاج.'
-                  : 'The undersigned has read and understood the above contents and terms. The undersigned represent that the information provided is true and accurate and understands the importance of alerting the staff to any medical conditions or concern. The spa reserves the right to refuse treatment. I agree that either the spa, not its employee or management shall be liable or responsible for aggravation of any existing conditions as a result of my treatment. I am voluntarily undertaking this treatment.'}
+                {bookingLabels.consentText}
               </div>
 
               {/*  */}
@@ -408,7 +412,7 @@ const PDFPreviewPage = () => {
               
               {/* Signature */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
-                <h2 className="text-[14px] font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">Customer Signature</h2>
+                <h2 className="text-[14px] font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">{bookingLabels.signature}</h2>
                 <div className="border border-gray-300 p-2 rounded bg-white flex items-center justify-center" style={{ minHeight: '90px' }}>
                   <img
                     src={formData.signature && formData.signature.startsWith('data:image') ? formData.signature : placeholderSignature}
