@@ -25,17 +25,6 @@
     ],
     "treatments": [
       {
-        "title": "Thai Massage",
-        "category": "treatment",
-        "description": "A type of full body massage that uses a mixture of deep tissue pressure, muscle and joint stretching, and gentle adjustments of the body into yoga-like poses",
-        "image": "thai-massage.png",
-        "pricing": [
-          { "duration": "60 min", "price": "220 Qr" },
-          { "duration": "90 min", "price": "250 Qr" },
-          { "duration": "2 hrs", "price": "300 Qr" }
-        ]
-      },
-      {
         "title": "Sport Massage",
         "category": "treatment",
         "description": "A type of massage designed to help athletes before, during and after training. Sports massage can help you to: increase flexibility, prevent injuries, improve performance",
@@ -57,6 +46,17 @@
           { "duration": "120 min", "price": "220 Qr" }
         ]
       },
+      {
+        "title": "Thai Massage",
+        "category": "treatment",
+        "description": "A type of full body massage that uses a mixture of deep tissue pressure, muscle and joint stretching, and gentle adjustments of the body into yoga-like poses",
+        "image": "thai-massage.png",
+        "pricing": [
+          { "duration": "60 min", "price": "220 Qr" },
+          { "duration": "90 min", "price": "250 Qr" },
+          { "duration": "2 hrs", "price": "300 Qr" }
+        ]
+      },   
       {
         "title": "Swedish Massage",
         "category": "treatment",

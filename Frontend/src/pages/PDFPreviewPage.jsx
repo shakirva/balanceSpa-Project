@@ -393,7 +393,7 @@ const PDFPreviewPage = () => {
 
 
                      {/* Notes */}
-              <div className="p-3 print:p-2 rounded print:rounded-none">
+              <div className="p-3 print:p-2 text-base font-semibold rounded print:rounded-none">
                 <h2 className="text-[13px] print:text-base font-semibold text-gray-800">{formData.language === 'ar' ? 'ملاحظة:' : 'Notes:'} <span> {bookingLabels.notesWarning}</span></h2>         
               </div>
 

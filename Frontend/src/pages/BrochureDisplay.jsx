@@ -7,14 +7,19 @@ import morocconBath from '@assets/moroccon-bath.png';
 import treatmentService from '@assets/treatment-service.png';
 import beautyService from '@assets/beauty-service.png';
 import thaiMassage from '@assets/thai-massage.png';
+import { MdArrowOutward } from "react-icons/md";
+
 
 const BrochureDisplay = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const selectedLanguage = location.state?.language || 'en';
-  const selectedCategory = location.state?.category;
+  const initialCategory = location.state?.category;
   const [showModal, setShowModal] = useState(false);
   const [mobileInput, setMobileInput] = useState('');
+  // Add state for selected category
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+
   useEffect(() => {
     if (!selectedLanguage || !selectedCategory) {
       navigate('/', { replace: true });
@@ -119,6 +124,7 @@ const BrochureDisplay = () => {
           {currentCategory?.title || selectedCategory}
         </h1>
 
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredTreatments.map((treatment, index) => (
             <div key={index} className="bg-zinc-900 rounded-xl p-3 overflow-hidden text-white shadow-lg cursor-pointer" onClick={() =>
@@ -145,6 +151,27 @@ const BrochureDisplay = () => {
             </div>
           ))}
         </div>
+
+        
+        {/* Category Quick Access List */}
+        <div className="flex gap-3 mb-8 overflow-x-auto pb-2 mt-10 border-t border-zinc-700 pt-4">
+          {translations.services
+            .filter(service => service.id !== selectedCategory)
+            .map((service) => (
+              <button
+                key={service.id}
+                onClick={() => setSelectedCategory(service.id)}
+                className="relative flex items-center gap-2 px-5 py-2 rounded-md border transition font-semibold bg-zinc-800 text-gray-200 border-zinc-700 hover:bg-blue-700 hover:text-white"
+              >
+              <span>{service.title}</span>  
+                <span className="">
+                <MdArrowOutward />
+                </span>
+              </button>
+            ))}
+        </div>
+
+
       </div>
 
      {/* Modal */}
