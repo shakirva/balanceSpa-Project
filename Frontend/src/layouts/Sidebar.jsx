@@ -1,37 +1,36 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { FaHome, FaCog, FaSignOutAlt } from "react-icons/fa";
-import logo from "@assets/logo.png";
-import { FaCartPlus } from "react-icons/fa6";
-import { assets } from "@assets/assets.js";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  FaCog,
+  FaSignOutAlt,
+  FaUsers,
+  FaUser,
+  FaCalendarAlt,
+} from "react-icons/fa";
 import { RiStackFill } from "react-icons/ri";
 import { BsBoxSeamFill } from "react-icons/bs";
-import { FaUser } from "react-icons/fa6";
 import { IoClose } from "react-icons/io5";
-import { FaUsers } from "react-icons/fa";
-import { FaCalendarAlt } from "react-icons/fa";
+import { assets } from "@assets/assets";
 
 const Sidebar = ({ isCollapsed, toggleSidebar }) => {
   return (
     <div
-      className={`fixed top-0 left-0 h-full z-40 bg-white transition-transform duration-500 ease-in-out dark:bg-bgDark ${
-        isCollapsed ? "-translate-x-full" : "translate-x-0"
-      } md:relative md:translate-x-0 `}
+      className={`fixed top-0 left-0 h-full z-40 bg-white transition-transform duration-500 ease-in-out dark:bg-bgDark 
+      ${isCollapsed ? "-translate-x-full" : "translate-x-0"} md:relative md:translate-x-0`}
     >
+      {/* Logo Section */}
       <div className="flex items-center p-4 justify-center">
         <img
-          src={isCollapsed ? '' : assets.textlogo}
+          src={assets.textlogo}
           alt="Logo"
-          className={`h-8 w-28 transition-all duration-500 dark:invert dark:brightness-0 ${
-            isCollapsed ? "hidden" : "hidden md:block"
-          }`}
+          className={`h-8 transition-all duration-500 dark:invert dark:brightness-0 
+            ${isCollapsed ? "hidden" : "hidden md:block w-28"}`}
         />
         <img
           src={assets.textlogo}
           alt="Mobile Logo"
-          className={`h-8 w-10 transition-all duration-500 dark:invert dark:brightness-0 ${
-            isCollapsed ? "block" : "md:hidden"
-          }`}
+          className={`h-8 w-10 transition-all duration-500 dark:invert dark:brightness-0 
+            ${isCollapsed ? "block" : "md:hidden"}`}
         />
         <button
           onClick={toggleSidebar}
@@ -41,87 +40,59 @@ const Sidebar = ({ isCollapsed, toggleSidebar }) => {
           <IoClose />
         </button>
       </div>
-      <div className="p-4 flex flex-col gap-[6px]">
-        <MenuItem
-          icon={<FaHome />}
-          text="Dashboard"
-          to="/"
-          isCollapsed={isCollapsed}
-        />
-        <MenuItem
-          icon={<FaCalendarAlt />}
-          text="Appointments"
-          to="/appointment"
-          isCollapsed={isCollapsed}
-        />
-         <MenuItem
-          icon={<RiStackFill />}
-          text="Services"
-          to="/service-category"
-          isCollapsed={isCollapsed}
-        />
-         <MenuItem
-          icon={<BsBoxSeamFill />}
-          text="Treatment"
-          to="/treatment"
-          isCollapsed={isCollapsed}
-        />
-        {/* <MenuItem
-          icon={<BsBoxSeamFill />}
-          text="Products"
-          to="/products"
-          isCollapsed={isCollapsed}
-        /> */}
-        <MenuItem
-          icon={<FaUsers />}
-          text="Customers"
-          to="/customers"
-          isCollapsed={isCollapsed}
-        />
-       
-        <MenuItem
-          icon={<FaUser />}
-          text="Users"
-          to="/users"
-          isCollapsed={isCollapsed}
-        />
-        
-       
-        <MenuItem
-          icon={<FaCog />}
-          text="Settings"
-          to="/settings"
-          isCollapsed={isCollapsed}
-        />
-        <MenuItem
-          icon={<FaSignOutAlt />}
-          text="Logout"
-          to="/logout"
-          isCollapsed={isCollapsed}
-        />
+
+      {/* Menu Items */}
+      <div className="p-4 flex flex-col gap-2">
+        <MenuItem icon={<FaCalendarAlt />} text="Appointments" to="/appointment" isCollapsed={isCollapsed} />
+        <MenuItem icon={<RiStackFill />} text="Services" to="/service-category" isCollapsed={isCollapsed} />
+        <MenuItem icon={<BsBoxSeamFill />} text="Treatment" to="/treatment" isCollapsed={isCollapsed} />
+        <MenuItem icon={<FaUsers />} text="Customers" to="/customers" isCollapsed={isCollapsed} />
+        <MenuItem icon={<FaUser />} text="Users" to="/users" isCollapsed={isCollapsed} />
+        <MenuItem icon={<FaCog />} text="Settings" to="/settings" isCollapsed={isCollapsed} />
+        <LogoutItem icon={<FaSignOutAlt />} text="Logout" isCollapsed={isCollapsed} />
       </div>
     </div>
   );
 };
 
+// ✅ Single Sidebar Menu Link
 const MenuItem = ({ icon, text, to, isCollapsed }) => {
   const location = useLocation();
-  const isActive =
-    location.pathname === to ||
-    (to !== "/" && location.pathname.startsWith(to));
+  const isActive = location.pathname === to || location.pathname.startsWith(to);
 
   return (
     <Link
       to={to}
-      className={`flex items-center  ${
-        isCollapsed ? "justify-center p-4 pe-3 w-12 h-12" : "justify-start"
-      } px-3 pe-16 py-3 rounded-lg ${
-        isActive ? "bg-[#18181b] text-white" : "text-gray-500"
-      } hover:bg-gray-300 hover:text-white dark:hover:bg-gray-600 transition duration-200 cursor-pointer`}
+      className={`flex items-center px-3 py-3 rounded-lg transition duration-200 cursor-pointer 
+        ${isCollapsed ? "justify-center w-12 h-12" : "justify-start pe-16"} 
+        ${isActive ? "bg-[#18181b] text-white" : "text-gray-500"} 
+        hover:bg-gray-300 hover:text-white dark:hover:bg-gray-600`}
     >
       {icon}
       {!isCollapsed && <span className="ml-3">{text}</span>}
     </Link>
+  );
+};
+
+// ✅ Logout with Side Effect
+const LogoutItem = ({ icon, text, isCollapsed }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    navigate("/admin/login");
+  };
+
+  return (
+    <button
+      onClick={handleLogout}
+      className={`flex items-center w-full text-left px-3 py-3 rounded-lg transition duration-200 cursor-pointer 
+        ${isCollapsed ? "justify-center w-12 h-12" : "justify-start pe-16"} 
+        text-gray-500 hover:bg-red-400 hover:text-white dark:hover:bg-red-600`}
+    >
+      {icon}
+      {!isCollapsed && <span className="ml-3">{text}</span>}
+    </button>
   );
 };
 

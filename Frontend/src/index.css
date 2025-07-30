@@ -121,3 +121,30 @@ input[type="number"] {
 .hotspot-indicator.active {
   background: rgba(34, 197, 94, 0.9);
 }
+
+
+
+
+
+/* ✅ Add this */
+.override-save-button {
+  background-color: #1d4ed8 !important;  /* Tailwind blue-700 */
+  color: #ffffff !important;             /* white text */
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.override-save-button:hover {
+  background-color: #1e40af !important;  /* Tailwind blue-800 */
+}
+
+.override-save-button:disabled {
+  background-color: #e5e7eb !important;  /* gray-200 */
+  color: #6b7280 !important;             /* gray-500 */
+  cursor: not-allowed;
+}

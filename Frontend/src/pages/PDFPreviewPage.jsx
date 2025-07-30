@@ -26,6 +26,13 @@ const PDFPreviewPage = () => {
     return null;
   }
 
+  // Debug: Log signature data
+  console.log('Signature data:', formData.signature);
+
+  // Placeholder signature image (SVG)
+  const placeholderSignature =
+    'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80"><rect width="200" height="80" fill="white"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="lightgray" font-size="18">Signature</text></svg>';
+
   // Body parts data for visualization
   const BODY_PARTS = {
     front: [
@@ -402,17 +409,13 @@ const PDFPreviewPage = () => {
               {/* Signature */}
               <div className=" p-3 print:p-2 rounded print:rounded-none">
                 <h2 className="text-[14px] font-semibold text-gray-800 mb-2 print:mb-1 border-b pb-1">Customer Signature</h2>
-                {formData.signature ? (
-                  <div className="border border-gray-300 p-2 rounded bg-white">
-                    <img 
-                      src={formData.signature} 
-                      alt="Customer Signature" 
-                      style={{ maxWidth: '200px', maxHeight: '80px' }}
-                    />
-                  </div>
-                ) : (
-                  <p className="text-gray-500 italic text-sm">No signature provided</p>
-                )}
+                <div className="border border-gray-300 p-2 rounded bg-white flex items-center justify-center" style={{ minHeight: '90px' }}>
+                  <img
+                    src={formData.signature && formData.signature.startsWith('data:image') ? formData.signature : placeholderSignature}
+                    alt="Customer Signature"
+                    style={{ maxWidth: '200px', maxHeight: '80px', display: 'block', margin: '0 auto', opacity: formData.signature && formData.signature.startsWith('data:image') ? 1 : 0.5 }}
+                  />
+                </div>
               </div>
 
 

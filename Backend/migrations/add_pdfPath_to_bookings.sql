@@ -1,0 +1,1 @@
+ALTER TABLE bookings ADD COLUMN pdfPath VARCHAR(255);

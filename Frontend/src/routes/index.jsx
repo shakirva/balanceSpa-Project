@@ -16,6 +16,9 @@ import AdminLogin from "@pages/AdminLogin";
 import ServiceCategory from "@pages/Category";
 import DisplayLanding from "@pages/DisplayLanding";
 import Settings from "@pages/Settings";
+import Logout from "@pages/Logout"; // ✅ Add this import
+import ProtectedRoute from "@pages/ProtectedRoute";
+
 
 const Loadable = (Component) => (props) => {
   return (
@@ -31,27 +34,31 @@ const Menu = Loadable(lazy(() => import("@pages/LanguageSelection")));
 
 export default function Router() {
   return useRoutes([
-    {
-      element: <MainLayout />,
-      children: [
-        { path: "/dashboard", element: <Dashboard /> },
-        { path: "products", element: <Products /> },
-        { path: "appointment", element: <Appointments /> },
-        { path: "service-category", element: <ServiceCategory /> },
-        { path: "customers", element: <Customers /> },
-        { path: "treatment", element: <Treatments /> },
-        { path: "settings", element: <Settings /> },
-        { path: "users", element: <Users /> },
-        { path: "404", element: <Page404 /> },
-        { path: "*", element: <Navigate to="/404" replace /> },
-      ],
-    },
+   {
+  element: (
+    <ProtectedRoute>
+      <MainLayout />
+    </ProtectedRoute>
+  ),
+  children: [
+    { path: "/dashboard", element: <Dashboard /> },
+    { path: "/appointment", element: <Appointments /> },
+    { path: "/service-category", element: <ServiceCategory /> },
+    { path: "/customers", element: <Customers /> },
+    { path: "/treatment", element: <Treatments /> },
+    { path: "/settings", element: <Settings /> },
+    { path: "/users", element: <Users /> },
+    { path: "/logout", element: <Logout /> },
+    { path: "/404", element: <Page404 /> },
+    { path: "*", element: <Navigate to="/404" replace /> },
+  ],
+},
     { path: "/", element: <DisplayLanding /> },
-    { path: "/admin", element: <AdminLogin /> },
-    {path: "/menu", element: <Services /> },
-    {path: "/brochure", element: <BrochureDisplay /> },
-    {path: "/booking", element: <BookingForm /> },
-    {path: "/pdf-preview", element: <PDFPreviewPage /> },
+   
+    { path: "/menu", element: <Services /> },
+    { path: "/brochure", element: <BrochureDisplay /> },
+    { path: "/booking", element: <BookingForm /> },
+    { path: "/pdf-preview", element: <PDFPreviewPage /> },
     { path: "/admin/login", element: <AdminLogin /> },
     { path: "*", element: <Navigate to="/404" replace /> },
   ]);

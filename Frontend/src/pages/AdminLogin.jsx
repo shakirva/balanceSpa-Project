@@ -23,7 +23,7 @@ export default function AdminLogin() {
         localStorage.setItem("adminToken", data.token);
 
         // redirect to dashboard
-        navigate("/admin/dashboard"); // change route as per your app
+        navigate("/appointment"); // change route as per your app
       } else {
         message.error(data.message || "Login failed");
       }

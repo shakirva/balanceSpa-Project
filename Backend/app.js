@@ -1,37 +1,47 @@
-// 📁 backend/app.js
 import express from 'express';
 import cors from 'cors';
-import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
 
-// Required for ESModules to get __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// ✅ Enable CORS for frontend access
+// ✅ 1. CORS
 app.use(cors({
-  origin: 'http://localhost:3000', // React frontend port
-  credentials: true
+  origin: 'http://localhost:3000',
+  credentials: true,
 }));
 
-// ✅ Middleware
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+// ✅ 2. ONLY JSON parser (not for files!)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// ✅ Booking API
+// ✅ 3. Routes that use multer (handles multipart/form-data correctly)
 import bookingRoutes from './routes/bookingRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
+import treatmentRoutes from './routes/treatmentRoutes.js';
+import customerRoutes from './routes/customerRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import settingsRoutes from './routes/settingsRoutes.js';
+
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/treatments', treatmentRoutes); // ✅ this uses multer
+app.use('/api/customers', customerRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/settings', settingsRoutes);
 
-// ✅ Static React frontend build
+// ✅ Static file serving
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/pdfs', express.static(path.join(__dirname, 'uploads/pdfs')));
+
+// ✅ React frontend (if serving from backend)
 app.use(express.static(path.join(__dirname, 'views')));
-
-// ✅ Fallback: All unmatched routes handled by React
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });

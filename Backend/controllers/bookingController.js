@@ -1,79 +1,142 @@
-// 📁 backend/controllers/bookingController.js
-import db from '../config/db.js';
-import { generatePDF } from '../utils/pdfUtils.js';
-import fs from 'fs';
+// 📁 controllers/bookingController.js
+import path from 'path';
+import pool from '../config/db.js';
 
+// ✅ Create a new booking
 export const createBooking = async (req, res) => {
   try {
-    const formData = req.body;
-    const pdfPath = await generatePDF(formData);
+    const {
+      name,
+      date,
+      time,
+      nationality,
+      mobile,
+      knowFrom,
+      socialMedia,
+      healthConditions,
+      implants,
+      implantDetails,
+      pressure,
+      skinType,
+      otherConcerns,
+      promotional,
+      selectedBodyParts,
+      selectedService,
+      selectedTreatment,
+      selectedDuration,
+      selectedPrice,
+      signature,
+    } = req.body;
 
-    const result = await db.query(
+    const pdfFile = req.file;
+    if (!pdfFile) {
+      return res.status(400).json({ error: 'PDF file is missing' });
+    }
+
+    // ✅ Convert boolean to integer (MySQL-safe)
+    const promoValue = promotional === true || promotional === 'true' ? 1 : 0;
+
+    // ✅ Construct public PDF path (for frontend access)
+    const publicPath = `/pdfs/${pdfFile.filename}`;
+
+    const [result] = await pool.query(
       `INSERT INTO bookings (
-        date, name, time, nationality, mobile,
-        knowFrom, socialMedia, healthConditions,
-        implants, implantDetails, pressure,
-        skinType, otherConcerns, promotional,
-        selectedBodyParts, selectedService,
-        selectedTreatment, selectedDuration,
-        selectedPrice, signature, pdfPath
+        name, date, time, nationality, mobile, knowFrom, socialMedia,
+        healthConditions, implants, implantDetails, pressure, skinType,
+        otherConcerns, promotional, selectedBodyParts, selectedService,
+        selectedTreatment, selectedDuration, selectedPrice, signature, pdfPath
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        formData.date,
-        formData.name,
-        formData.time,
-        formData.nationality,
-        formData.mobile,
-        JSON.stringify(formData.knowFrom),
-        JSON.stringify(formData.socialMedia),
-        JSON.stringify(formData.healthConditions),
-        formData.implants,
-        formData.implantDetails,
-        formData.pressure,
-        formData.skinType,
-        formData.otherConcerns,
-        formData.promotional,
-        JSON.stringify(formData.selectedBodyParts),
-        formData.selectedService,
-        formData.selectedTreatment,
-        formData.selectedDuration,
-        formData.selectedPrice,
-        formData.signature,
-        pdfPath
+        name,
+        date,
+        time,
+        nationality,
+        mobile,
+        knowFrom,
+        socialMedia,
+        healthConditions,
+        implants,
+        implantDetails,
+        pressure,
+        skinType,
+        otherConcerns,
+        promoValue,
+        selectedBodyParts,
+        selectedService,
+        selectedTreatment,
+        selectedDuration,
+        selectedPrice,
+        signature,
+        publicPath,
       ]
     );
 
-    res.status(200).json({ message: 'Booking saved', id: result[0].insertId });
-  } catch (err) {
-    console.error('Booking Error:', err);
-    res.status(500).json({ error: 'Something went wrong' });
+    res.status(201).json({
+      message: 'Booking created successfully',
+      bookingId: result.insertId,
+      pdfPath: publicPath,
+    });
+  } catch (error) {
+    console.error('❌ Create Booking Error:', error);
+    res.status(500).json({ error: 'Failed to create booking' });
   }
 };
 
+// ✅ Get all bookings
 export const getAllBookings = async (req, res) => {
   try {
-    const [rows] = await db.query(`
-      SELECT 
-        id, name, mobile, date, time, 
-        selectedService, selectedDuration, selectedPrice 
-      FROM bookings ORDER BY id DESC
-    `);
-    res.status(200).json(rows);
-  } catch (err) {
-    console.error('Fetch Bookings Error:', err);
-    res.status(500).json({ error: 'Failed to fetch bookings' });
+    const [rows] = await pool.query('SELECT * FROM bookings ORDER BY id DESC');
+    res.json(rows);
+  } catch (error) {
+    console.error('❌ Get Bookings Error:', error);
+    res.status(500).json({ message: 'Failed to fetch bookings' });
   }
 };
-export const getBookingById = async (req, res) => {
+
+
+export const updateAppointmentNotes = async (req, res) => {
   const { id } = req.params;
+  const { doctor_note } = req.body;
+
+  if (!doctor_note || doctor_note.trim() === '') {
+    return res.status(400).json({ error: 'Doctor note cannot be empty.' });
+  }
+
   try {
-    const [rows] = await db.query('SELECT * FROM bookings WHERE id = ?', [id]);
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'Booking not found' });
-    }
-    res.status(200).json(rows[0]);
+    // 1. Update main booking
+    await pool.query(
+      'UPDATE bookings SET doctor_note = ? WHERE id = ?',
+      [doctor_note, id]
+    );
+
+    // 2. Insert into note logs
+    await pool.query(
+      'INSERT INTO note_logs (booking_id, notes) VALUES (?, ?)',
+      [id, doctor_note]
+    );
+
+    res.status(200).json({ message: 'Note updated and logged successfully' });
   } catch (err) {
-    console.error('Fetch Booking Error:', err);
-    res.status(500).json({ error: 'Failed to fetch booking' });
+    console.error('Error updating notes:', err);
+    res.status(500).json({ error: 'Failed to update doctor note' });
+  }
+};
+
+
+
+
+export const getAllUpdatedNotes = async (req, res) => {
+  try {
+    const [logs] = await pool.query(`
+      SELECT nl.id, nl.booking_id, b.name AS customer_name, nl.notes, nl.updated_at
+      FROM note_logs nl
+      JOIN bookings b ON nl.booking_id = b.id
+      ORDER BY nl.updated_at DESC
+    `);
+
+    res.status(200).json(logs);
+  } catch (err) {
+    console.error('Error fetching note logs:', err);
+    res.status(500).json({ error: 'Failed to fetch note logs' });
   }
 };

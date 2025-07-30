@@ -18,7 +18,8 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
     "mysql2": "^3.9.0",
-    "pdfkit": "^0.17.1"
+    "pdfkit": "^0.17.1",
+    "react-signature-pad-wrapper": "^4.1.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"

@@ -1,23 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getTranslations } from '../utils/translations';
 import BodySelection from '@components/BodySelection';
-import SignaturePad from 'react-signature-canvas';
+import SignaturePad from 'react-signature-pad-wrapper';
+import axiosInstance from '../api/axios'; // Correct import path for axiosInstance
+
 import { useRef } from 'react';
 import { generateAppointmentPDF } from '@utils/pdfGenerator';
+import axios from '../api/axios';
+
+
+
+
 
 const BookingForm = () => {
   const location = useLocation();
   const selectedLanguage = location.state?.language || 'en';
   const translations = getTranslations(selectedLanguage).booking;
 
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     date: '',
     name: '',
     time: '',
     nationality: '',
     mobile: '',
-    knowFrom: [],
+    knowFrom: [],   
     socialMedia: [],
     healthConditions: [],
     implants: '',
@@ -33,6 +40,45 @@ const BookingForm = () => {
     selectedDuration: '',
     selectedPrice: ''
   });
+
+
+  const [categories, setCategories] = useState([]);
+const [treatments, setTreatments] = useState([]);
+const [isModalOpen, setIsModalOpen] = useState(false);
+
+
+
+
+// Fetch categories (services)
+useEffect(() => {
+  axios.get('/api/categories')
+    .then(res => {
+      setCategories(res.data);
+    })
+    .catch(err => console.error('Failed to fetch services:', err));
+}, []);
+
+// Fetch treatments when a category is selected
+useEffect(() => {
+  if (formData.selectedService) {
+  axios
+  .get(`/api/treatments?category_id=${formData.selectedService}`)
+  .then(res => {
+    console.log("Full treatment response:", res.data);
+    if (Array.isArray(res.data) && res.data.length > 0) {
+      setTreatments(res.data[0].treatments || []);
+    } else {
+      setTreatments([]);
+    }
+  })
+  .catch(err => console.error('Failed to fetch treatments:', err));
+
+  } else {
+    setTreatments([]);
+  }
+}, [formData.selectedService]);
+
+  
 
   const navigate = useNavigate();
   const handleBodyPartSelection = (newSelectedParts) => {
@@ -64,25 +110,52 @@ const BookingForm = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    // Get signature as data URL
-    const signatureDataUrl = sigPadRef.current.isEmpty() ? '' : sigPadRef.current.getTrimmedCanvas().toDataURL('image/png');
+  let signatureDataUrl = '';
+  if (sigPadRef.current) {
+    signatureDataUrl = sigPadRef.current.toDataURL();
+  }
 
-    // Prepare data for PDF preview
-    const pdfData = {
-      ...formData,
-      signature: signatureDataUrl,
-      language: selectedLanguage,
-    };
-
-    // Navigate to PDF preview page
-    navigate('/pdf-preview', { state: { formData: pdfData } });
+  const pdfData = {
+    ...formData,
+    signature: signatureDataUrl,
+    language: selectedLanguage,
   };
+
+  const pdfBlob = await generateAppointmentPDF(pdfData);
+
+  const form = new FormData();
+  Object.entries(pdfData).forEach(([key, value]) => {
+    form.append(key, typeof value === 'object' ? JSON.stringify(value) : value);
+  });
+  form.append('pdf', pdfBlob, 'consultation.pdf');
+
+  try {
+    await axiosInstance.post('/api/bookings/create', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+
+    // Instead of navigating, show modal
+    setIsModalOpen(true);
+  } catch (err) {
+    alert('Failed to submit booking');
+    console.error(err);
+  }
+};
+
+  
   
 
   const sigPadRef = useRef();
+
+  // Only clear the pad on clear button
+  const handleClearSignature = () => {
+    if (sigPadRef.current) {
+      sigPadRef.current.clear();
+    }
+  };
 
   const checkboxClass = (isActive) =>
     `flex items-center gap-2 px-4 py-2 rounded-full border transition text-sm font-medium cursor-pointer ${
@@ -187,36 +260,40 @@ const BookingForm = () => {
                         className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
                       />
                     </div>
-                    <div className="mb-4">
-                  <label className="block font-semibold mb-2">Selected Service</label>
-                  <select
-                    name="selectedService"
-                    value={formData.selectedService}
-                    onChange={handleChange}
-                    className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
-                  >
-                    <option value="">Select a service</option>
-                    <option value="Massage">Massage</option>
-                    <option value="Facial">Facial</option>
-                    <option value="Body Scrub">Body Scrub</option>
-                    {/* Add more services as needed */}
-                  </select>
-                  </div>
-                  <div className="mb-4">
-                  <label className="block font-semibold mb-2">Select Treatment</label>
-                  <select
-                    name="selectedTreatment"
-                    value={formData.selectedTreatment}
-                    onChange={handleChange}
-                    className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
-                  >
-                    <option value="">Select a treatment</option>
-                    <option value="Aromatherapy">Aromatherapy</option>
-                    <option value="Deep Tissue">Deep Tissue</option>
-                    <option value="Brightening Facial">Brightening Facial</option>
-                    {/* Add more treatments as needed */}
-                  </select>
-                  </div>
+                   <div className="mb-4">
+  <label className="block font-semibold mb-2">Select Service</label>
+  <select
+    name="selectedService"
+    value={formData.selectedService}
+    onChange={handleChange}
+    className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
+  >
+    <option value="">Select a service</option>
+    {categories.map((cat) => (
+      <option key={cat.id} value={cat.id}>
+        {selectedLanguage === 'ar' ? cat.name_ar : cat.name_en}
+      </option>
+    ))}
+  </select>
+</div>
+ <div className="mb-4">
+  <label className="block font-semibold mb-2">Select  Treatment</label>
+<select
+  name="selectedTreatment"
+  value={formData.selectedTreatment}
+  onChange={handleChange}
+  className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
+  disabled={!formData.selectedService || treatments.length === 0}
+>
+  <option value="">Select a treatment</option>
+  {treatments.map((treat) => (
+    <option key={treat.id} value={treat.id}>
+      {selectedLanguage === 'ar' ? treat.name_ar : treat.name_en}
+    </option>
+  ))}
+</select>
+</div>
+
                   <div>
                   <label className="block font-semibold mb-2">
                     {selectedLanguage === 'ar' ? 'اختر المدة' : 'Select Duration'}
@@ -266,7 +343,7 @@ const BookingForm = () => {
                       />
                     </div>
 
-                    <div>
+                    {/* <div>
                     <label className="block font-semibold mb-2">Start Time</label>
                     <input
                       type="time"
@@ -274,7 +351,7 @@ const BookingForm = () => {
                       className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
                       onChange={handleChange}
                     />
-                  </div>
+                  </div> */}
 
                   
 
@@ -470,7 +547,7 @@ const BookingForm = () => {
                   />
                 </div>
 
-                <div className="text-sm border border-zinc-700 p-3 mb-4 rounded bg-zinc-800">
+                <div className="text-lg border border-zinc-700 p-3 mb-4 rounded bg-zinc-800">
                   <strong className="text-red-500">
                     {selectedLanguage === 'ar' ? 'ملاحظة:' : 'NOTE:'}
                   </strong> 
@@ -495,22 +572,77 @@ const BookingForm = () => {
                   {translations.labels.promotional}
                 </label>
 
+                
+{isModalOpen && (
+  <div
+    style={{
+      position: 'fixed',
+      top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000
+    }}
+  >
+    <div
+      style={{
+        background: '#1f2937', // Dark gray background
+        padding: '30px',
+        borderRadius: '10px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+        textAlign: 'center',
+        minWidth: '320px',
+        color: '#fff' // White text
+      }}
+    >
+      <h2 style={{ marginBottom: '10px' }}>Booking Successful!</h2>
+      <p>Your consultation has been submitted successfully.</p>
+      <button
+        onClick={() => setIsModalOpen(false)}
+        style={{
+          marginTop: '20px',
+          padding: '10px 24px',
+          backgroundColor: '#10b981', // Emerald green
+          color: '#fff',
+          fontWeight: 'bold',
+          border: 'none',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          transition: 'background 0.3s ease'
+        }}
+      >
+        OK
+      </button>
+    </div>
+  </div>
+)}
+
+
+
                 <div className="mt-4">
                   <label className="block font-semibold mb-2">{translations.labels.signature}</label>
                   <div className="border border-zinc-700 rounded bg-white">
-                    <SignaturePad
+                  <SignaturePad
                       ref={sigPadRef}
+                      options={{
+                        minWidth: 1,
+                        maxWidth: 2.5,
+                        penColor: "black",
+                        backgroundColor: "white"
+                      }}
                       canvasProps={{
                         width: 500,
                         height: 200,
                         className: "signatureCanvas w-full"
                       }}
                     />
+
                   </div>
                   <div className="flex justify-between mt-2">
                     <button
                       type="button"
-                      onClick={() => sigPadRef.current.clear()}
+                      onClick={handleClearSignature}
                       className="bg-zinc-700 text-white px-3 py-1 rounded hover:bg-red-600"
                     >
                       {selectedLanguage === 'ar' ? 'مسح' : 'Clear'}

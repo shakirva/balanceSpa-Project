@@ -1,34 +1,32 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Table, Button, Tag } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-
-// Dummy admin users data
-const initialUsers = [
-  {
-    id: 1,
-    name: "Alice Smith",
-    email: "alice.smith@email.com",
-    phone: "+1 (555) 111-2222",
-    role: "Admin",
-  },
-  {
-    id: 2,
-    name: "Bob Johnson",
-    email: "bob.johnson@email.com",
-    phone: "+1 (555) 333-4444",
-    role: "Admin",
-  },
-  {
-    id: 3,
-    name: "Carol Lee",
-    email: "carol.lee@email.com",
-    phone: "+1 (555) 555-6666",
-    role: "Admin",
-  },
-];
+import axios from "axios";
 
 export default function Users() {
-  const [users] = useState(initialUsers);
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const fetchAdmins = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/admin", {
+          withCredentials: true,
+        });
+
+        const formattedData = res.data.map((admin) => ({
+          id: admin.id,
+          email: admin.email,
+          role: "Admin", // static role
+        }));
+
+        setUsers(formattedData);
+      } catch (error) {
+        console.error("Error fetching admins:", error);
+      }
+    };
+
+    fetchAdmins();
+  }, []);
 
   return (
     <div className="p-4">
@@ -44,19 +42,9 @@ export default function Users() {
         pagination={false}
         columns={[
           {
-            title: "Name",
-            dataIndex: "name",
-            key: "name",
-          },
-          {
             title: "Email",
             dataIndex: "email",
             key: "email",
-          },
-          {
-            title: "Phone",
-            dataIndex: "phone",
-            key: "phone",
           },
           {
             title: "Role",
@@ -68,4 +56,4 @@ export default function Users() {
       />
     </div>
   );
-} 
+}

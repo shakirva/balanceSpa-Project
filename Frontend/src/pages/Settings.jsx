@@ -1,35 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from '../api/axios';
 
 const Settings = () => {
   const [videoFile, setVideoFile] = useState(null);
   const [videoPreview, setVideoPreview] = useState(null);
+
+  useEffect(() => {
+    axios.get('http://localhost:5000/api/settings/get-video', { responseType: 'blob' })
+      .then((res) => {
+        const videoUrl = URL.createObjectURL(res.data);
+        setVideoPreview(videoUrl);
+      })
+      .catch(() => {
+        setVideoPreview(null);
+      });
+  }, []);
 
   const handleVideoChange = (e) => {
     const file = e.target.files[0];
     setVideoFile(file);
     if (file) {
       setVideoPreview(URL.createObjectURL(file));
-    } else {
-      setVideoPreview(null);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!videoFile) {
-      alert('Please select a video file.');
-      return;
+    if (!videoFile) return alert('Please select a video file.');
+
+    const formData = new FormData();
+    formData.append('video', videoFile);
+
+    try {
+      await axios.post('http://localhost:5000/api/settings/upload-video', formData);
+      alert('Video uploaded successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Video upload failed!');
     }
-    // Here you would handle the upload logic (e.g., send to server or save locally)
-    alert('Video uploaded successfully!');
   };
 
   return (
-    <div className="min-h-screen">
-        <div className="p-4">
-        <h1 className="text-2xl font-bold mb-6">Settings</h1>
+    <div className="min-h-screen p-4">
+      <h1 className="text-2xl font-bold mb-6">Settings</h1>
       <div className="p-4 bg-white rounded-lg w-full max-w-md">
-        
         <form onSubmit={handleSubmit}>
           <label className="block font-semibold mb-2">Upload Initial Video</label>
           <input
@@ -53,7 +67,6 @@ const Settings = () => {
             Save
           </button>
         </form>
-      </div>
       </div>
     </div>
   );

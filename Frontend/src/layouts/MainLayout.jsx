@@ -18,7 +18,7 @@ const MainLayout = () => {
           isCollapsed ? "" : ""
         }`}
       >
-        <TopHeader isCollapsed={isCollapsed} toggleSidebar={toggleSidebar} />
+        {/* <TopHeader isCollapsed={isCollapsed} toggleSidebar={toggleSidebar} /> */}
         <main className="flex-1 p-4 overflow-y-auto bg-gray-100 dark:bg-bgLighdark">
           <Outlet />
         </main>

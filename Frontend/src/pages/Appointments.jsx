@@ -1,147 +1,280 @@
-// 📁 frontend/pages/Appointments.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Pagination } from 'antd';
-import {
-  FaPhone, FaSearch, FaRegEdit, FaRegFilePdf
-} from 'react-icons/fa';
-import { FaRegTrashCan } from "react-icons/fa6";
-import { generateAppointmentPDF } from '@utils/pdfGenerator';
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
+  const [filteredAppointments, setFilteredAppointments] = useState([]);
+  const [editedNotes, setEditedNotes] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [viewNote, setViewNote] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(1);
-  const [generatingPDF, setGeneratingPDF] = useState(null);
-
-  const limit = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchAppointments();
   }, []);
 
+  useEffect(() => {
+    const filtered = appointments.filter(appt =>
+      appt.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      appt.selectedService?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredAppointments(filtered);
+    setCurrentPage(1); // Reset to first page on new search
+  }, [searchTerm, appointments]);
+
   const fetchAppointments = async () => {
     try {
       const res = await axios.get('http://localhost:5000/api/bookings');
-      setAppointments(res.data);
+      const data = Array.isArray(res.data) ? res.data : [];
+      setAppointments(data);
+      setFilteredAppointments(data);
     } catch (err) {
       console.error('Failed to fetch appointments:', err);
     }
   };
 
-  const filteredAppointments = appointments.filter(appt =>
-    appt.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    appt.mobile?.includes(searchTerm) ||
-    appt.selectedService?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const paginatedAppointments = filteredAppointments.slice(
-    (page - 1) * limit,
-    page * limit
-  );
-
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString();
-  };
-
-  const formatTime = (timeStr) => {
-    const [hour, min] = timeStr.split(':');
-    const h = parseInt(hour);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const displayHour = h % 12 || 12;
-    return `${displayHour}:${min} ${ampm}`;
-  };
-
-  const handleGeneratePDF = async (appointment) => {
+  const saveNote = async (id) => {
+    if (!editedNotes[id]?.trim()) return;
+    setIsSaving(true);
     try {
-      setGeneratingPDF(appointment._id);
-      await generateAppointmentPDF(appointment);
+      await axios.put(`http://localhost:5000/api/bookings/${id}/note`, {
+        doctor_note: editedNotes[id],
+      });
+
+      setAppointments((prev) =>
+        prev.map((appt) =>
+          appt.id === id ? { ...appt, doctor_note: editedNotes[id] } : appt
+        )
+      );
+
+      setEditedNotes((prev) => ({ ...prev, [id]: '' }));
     } catch (err) {
-      console.error('PDF generation failed:', err);
-      alert('Failed to generate PDF.');
+      console.error('Failed to update doctor note:', err);
     } finally {
-      setGeneratingPDF(null);
+      setIsSaving(false);
     }
   };
 
+  const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
+  const displayedAppointments = filteredAppointments.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-semibold mb-4">Appointments</h2>
+    <div style={{ padding: '24px' }}>
+      <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '16px' }}>Appointments</h2>
 
-      {/* Search Bar */}
-      <div className="mb-4 flex gap-2 items-center">
-        <FaSearch />
-        <input
-          type="text"
-          placeholder="Search by name, phone, or service..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="p-2 border rounded w-full"
-        />
-      </div>
+      <input
+        type="text"
+        placeholder="Search by customer or service"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        style={{
+          padding: '10px',
+          marginBottom: '20px',
+          width: '100%',
+          maxWidth: '400px',
+          border: '1px solid #d1d5db',
+          borderRadius: '6px',
+        }}
+      />
 
-      {/* Appointments Table */}
-      <div className="overflow-x-auto bg-white shadow rounded">
-        <table className="min-w-full table-auto border-collapse">
-          <thead>
-            <tr className="bg-gray-100 text-left">
-              <th className="p-3 border">Customer</th>
-              <th className="p-3 border">Service</th>
-              <th className="p-3 border">Date</th>
-              <th className="p-3 border">Time</th>
-              <th className="p-3 border">Duration</th>
-              <th className="p-3 border">Price</th>
-              <th className="p-3 border">Actions</th>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ minWidth: '100%', backgroundColor: '#fff', borderCollapse: 'collapse', border: '1px solid #d1d5db' }}>
+          <thead style={{ backgroundColor: '#f3f4f6' }}>
+            <tr>
+              <th style={thStyle}>Customer</th>
+              <th style={thStyle}>Date</th>
+              <th style={thStyle}>Time</th>
+              <th style={thStyle}>Service</th>
+              <th style={thStyle}>PDF</th>
+              <th style={thStyle}>Doctor Notes</th>
+              <th style={thStyle}>Action</th>
             </tr>
           </thead>
           <tbody>
-            {paginatedAppointments.map((appointment) => (
-              <tr key={appointment._id} className="hover:bg-gray-50">
-                <td className="p-3 border">
-                  {appointment.name}
-                  <br />
-                  <span className="text-sm text-gray-500">
-                    <FaPhone className="inline mr-1" /> {appointment.mobile}
-                  </span>
-                </td>
-                <td className="p-3 border">{appointment.selectedService}</td>
-                <td className="p-3 border">{formatDate(appointment.date)}</td>
-                <td className="p-3 border">{formatTime(appointment.time)}</td>
-                <td className="p-3 border">{appointment.selectedDuration}</td>
-                <td className="p-3 border">{appointment.selectedPrice} Qr</td>
-                <td className="p-3 border">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleGeneratePDF(appointment)}
-                      disabled={generatingPDF === appointment._id}
-                      title="Generate PDF"
-                    >
-                      <FaRegFilePdf />
-                    </button>
-                    <button title="Edit (future)">
-                      <FaRegEdit />
-                    </button>
-                    <button title="Delete (future)">
-                      <FaRegTrashCan />
-                    </button>
-                  </div>
+            {displayedAppointments.length > 0 ? (
+              displayedAppointments.map((appointment) => {
+                const { id, name, date, time, selectedService, pdfPath, doctor_note } = appointment;
+                const noteValue = editedNotes[id] ?? doctor_note ?? '';
+                const isButtonDisabled = !noteValue.trim() || isSaving;
+
+                return (
+                  <tr key={id} style={{ backgroundColor: '#fff' }}>
+                    <td style={tdStyle}>{name || 'N/A'}</td>
+                    <td style={tdStyle}>{date || 'N/A'}</td>
+                    <td style={tdStyle}>{time || 'N/A'}</td>
+                    <td style={tdStyle}>{selectedService || 'N/A'}</td>
+                    <td style={tdStyle}>
+                      {pdfPath ? (
+                        <a
+                          href={`http://localhost:5000${pdfPath}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#2563eb', textDecoration: 'underline' }}
+                        >
+                          View PDF
+                        </a>
+                      ) : (
+                        <span style={{ color: '#9ca3af' }}>N/A</span>
+                      )}
+                    </td>
+                    <td style={tdStyle}>
+                      {doctor_note && !editedNotes[id] && (
+                        <button
+                          onClick={() => setViewNote(doctor_note)}
+                          style={{
+                            backgroundColor: '#4f46e5',
+                            color: '#fff',
+                            padding: '6px 10px',
+                            fontSize: '13px',
+                            border: 'none',
+                            borderRadius: '5px',
+                            marginBottom: '8px',
+                            cursor: 'pointer',
+                            display: 'block',
+                          }}
+                        >
+                          View Note
+                        </button>
+                      )}
+                      <textarea
+                        value={noteValue}
+                        onChange={(e) =>
+                          setEditedNotes((prev) => ({ ...prev, [id]: e.target.value }))
+                        }
+                        placeholder="Enter doctor notes..."
+                        style={{
+                          width: '100%',
+                          border: '1px solid #d1d5db',
+                          padding: '8px',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          resize: 'none',
+                        }}
+                        rows={2}
+                      />
+                    </td>
+                    <td style={tdStyle}>
+                      <button
+                        onClick={() => saveNote(id)}
+                        disabled={isButtonDisabled}
+                        style={{
+                          backgroundColor: isButtonDisabled ? '#e5e7eb' : '#10b981',
+                          color: isButtonDisabled ? '#6b7280' : '#fff',
+                          padding: '8px 16px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          borderRadius: '6px',
+                          border: 'none',
+                          cursor: isButtonDisabled ? 'not-allowed' : 'pointer',
+                          transition: 'background 0.3s ease',
+                        }}
+                      >
+                        {isSaving ? 'Saving...' : 'Save'}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '16px', color: '#9ca3af' }}>
+                  No appointments found.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* Pagination */}
-      <Pagination
-        className="mt-4"
-        current={page}
-        pageSize={limit}
-        total={filteredAppointments.length}
-        onChange={(page) => setPage(page)}
-      />
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+          <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
+            Prev
+          </button>
+          {[...Array(totalPages)].map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentPage(idx + 1)}
+              style={{
+                fontWeight: currentPage === idx + 1 ? 'bold' : 'normal',
+              }}
+            >
+              {idx + 1}
+            </button>
+          ))}
+          <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
+            Next
+          </button>
+        </div>
+      )}
+
+      {viewNote && (
+        <div style={modalBackdrop}>
+          <div style={modalBox}>
+            <h3 style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '10px' }}>Doctor Note</h3>
+            <p style={{ whiteSpace: 'pre-wrap', color: '#111827' }}>{viewNote}</p>
+            <button
+              onClick={() => setViewNote(null)}
+              style={{
+                marginTop: '16px',
+                backgroundColor: '#ef4444',
+                color: '#fff',
+                padding: '8px 16px',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
+const thStyle = {
+  border: '1px solid #d1d5db',
+  padding: '12px',
+  textAlign: 'left',
+  fontWeight: '600',
+  backgroundColor: '#f9fafb',
+};
+
+const tdStyle = {
+  border: '1px solid #d1d5db',
+  padding: '12px',
+  verticalAlign: 'top',
+};
+
+const modalBackdrop = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 1000,
+};
+
+const modalBox = {
+  backgroundColor: '#fff',
+  padding: '24px',
+  borderRadius: '8px',
+  maxWidth: '500px',
+  width: '90%',
+  boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+};
+
 export default Appointments;
+
