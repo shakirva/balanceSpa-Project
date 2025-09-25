@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../api/axios'; // ✅ use shared axios instance
 import { getTranslations } from '../utils/translations';
+import { Form, Input } from 'antd';
 
 const Services = () => {
   const location = useLocation();
@@ -18,12 +19,14 @@ const Services = () => {
   const [showModal, setShowModal] = useState(false);
   const [mobileInput, setMobileInput] = useState(initialMobile);
   const [loading, setLoading] = useState(true);
+  const [order, setOrder] = useState(0);
+  const [selectedServices, setSelectedServices] = useState([]);
 
   // Fetch service categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/categories');
+        const res = await axios.get('/api/categories');
         setCategories(res.data);
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -44,9 +47,22 @@ const Services = () => {
     navigate(`/booking?lang=${selectedLanguage}&mobile=${mobileInput}`);
   };
 
-  // Navigate to brochure page
-  const handleCategorySelect = (categoryId) => {
-    navigate(`/brochure?category=${categoryId}&lang=${selectedLanguage}`);
+  // Toggle service selection
+  const handleServiceSelect = (categoryId) => {
+    setSelectedServices(prev =>
+      prev.includes(categoryId)
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
+  // Go to treatments page with selected services
+  const handleShowTreatments = () => {
+    if (selectedServices.length === 0) {
+      alert("Please select at least one service");
+      return;
+    }
+    navigate(`/brochure?services=${selectedServices.join(",")}&lang=${selectedLanguage}`);
   };
 
   return (
@@ -57,7 +73,7 @@ const Services = () => {
           {translations.common?.title || 'Balance Spa'}
         </h1>
         <p className="text-sm text-gray-400 text-center">
-          {translations.common?.subtitle || 'Luxury Wellness Experience'}
+          {translations.common?.subtitle || 'Keet it balance'}
         </p>
 
         {/* Back Button */}
@@ -73,12 +89,6 @@ const Services = () => {
         {/* Auth Buttons */}
         <div className={`absolute top-6 ${selectedLanguage === 'ar' ? 'left-8' : 'right-8'}`}>
           <div className="flex gap-2">
-            {/* <button
-              onClick={() => setShowModal(true)}
-              className="border border-white text-white px-6 py-3 rounded-full shadow hover:bg-blue-700"
-            >
-              {selectedLanguage === 'ar' ? 'مستخدم حالي' : 'Existing User'}
-            </button> */}
             <button
               onClick={() => navigate(`/booking?lang=${selectedLanguage}`)}
               className="bg-white text-black px-6 py-3 rounded-full shadow hover:bg-blue-700"
@@ -94,25 +104,46 @@ const Services = () => {
         {loading ? (
           <p className="text-center text-gray-400">Loading services...</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 overflow-y-auto max-h-[calc(100vh-280px)] pr-2">
-            {categories.map((category) => (
+          <div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 overflow-y-auto max-h-[calc(100vh-280px)] pr-2">
+              {categories
+                .sort((a, b) => (a.order || 0) - (b.order || 0))
+                .map((category) => (
+                  <div
+                    key={category.id}
+                    className={`bg-zinc-900 rounded-xl p-3 text-left transition hover:bg-zinc-800 relative ${selectedServices.includes(category.id) ? 'ring-2 ring-blue-500' : ''}`}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => handleServiceSelect(category.id)}
+                  >
+                    <div className="aspect-video rounded-lg overflow-hidden mb-3">
+                      <img
+                        src={category.image_url ? axios.defaults.baseURL + category.image_url : ''}
+                        alt={category.name_en}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <h3 className="text-lg font-semibold">
+                      {selectedLanguage === 'ar' ? category.name_ar : category.name_en}
+                    </h3>
+                    <input
+                      type="checkbox"
+                      checked={selectedServices.includes(category.id)}
+                      onChange={() => handleServiceSelect(category.id)}
+                      className="absolute top-4 right-4 w-5 h-5 accent-blue-500 cursor-pointer"
+                      onClick={e => e.stopPropagation()}
+                    />
+                  </div>
+                ))}
+            </div>
+            <div className="flex justify-center mt-8">
               <button
-                key={category.id}
-                onClick={() => handleCategorySelect(category.id)}
-                className="bg-zinc-900 rounded-xl p-3 text-left transition hover:bg-zinc-800"
+                onClick={handleShowTreatments}
+                className="bg-white text-black px-8 py-3 rounded-full shadow hover:bg-gray-100 text-lg font-semibold flex items-center gap-2 border border-gray-300"
               >
-                <div className="aspect-video rounded-lg overflow-hidden mb-3">
-                  <img
-                    src={`http://localhost:5000${category.image_url}`}
-                    alt={category.name_en}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h3 className="text-lg font-semibold">
-                  {selectedLanguage === 'ar' ? category.name_ar : category.name_en}
-                </h3>
+                {selectedLanguage === 'ar' ? 'عرض العلاجات' : 'Show Treatments'}
+                <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
               </button>
-            ))}
+            </div>
           </div>
         )}
       </div>
@@ -142,6 +173,18 @@ const Services = () => {
           </div>
         </div>
       )}
+
+      {/* Display Order Form Item */}
+      <Form.Item label="Display Order" name="order">
+        <Input
+          type="number"
+          min={0}
+          max={999}
+          value={order}
+          onChange={e => setOrder(Number(e.target.value))}
+          placeholder="Order (lower comes first)"
+        />
+      </Form.Item>
     </div>
   );
 };

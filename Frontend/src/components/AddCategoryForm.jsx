@@ -145,6 +145,11 @@ const AddCategoryForm = ({ visible, onCancel, onSuccess }) => {
           </div>
         </Form.Item>
 
+        {/* Display Order */}
+        <Form.Item label="Display Order" name="order" rules={[{ required: true, message: 'Please enter display order' }]}>
+          <Input type="number" min={0} placeholder="Order (lower comes first)" />
+        </Form.Item>
+
         {/* Preview Card */}
         {form.getFieldValue('name') && (
           <Card size="small" className="mb-4 bg-gray-50 dark:bg-gray-800">
@@ -194,4 +199,4 @@ const AddCategoryForm = ({ visible, onCancel, onSuccess }) => {
   );
 };
 
-export default AddCategoryForm; 
+export default AddCategoryForm;

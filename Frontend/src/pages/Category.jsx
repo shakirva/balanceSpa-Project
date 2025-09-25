@@ -14,9 +14,7 @@ import {
   EditOutlined,
   DeleteOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
-
-const API_BASE = "http://localhost:5000/api/categories";
+import axios from "../api/axios"; // ✅ use our axios instance
 
 const ServiceCategory = () => {
   const [categories, setCategories] = useState([]);
@@ -27,6 +25,7 @@ const ServiceCategory = () => {
     name_ar: "",
     image: null,
     imageFile: null,
+    order: 0, // Add order field
   });
   const [loading, setLoading] = useState(false);
 
@@ -36,11 +35,11 @@ const ServiceCategory = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get(API_BASE);
+      const res = await axios.get("/api/categories"); // ✅ no need for full URL
       setCategories(res.data);
     } catch (err) {
       console.error(err);
-      message.error("Failed to load categories");
+      message.error("Failed to load categories from the server");
     }
   };
 
@@ -50,26 +49,29 @@ const ServiceCategory = () => {
       setForm({
         name_en: cat.name_en,
         name_ar: cat.name_ar,
-        image: cat.image_url
-          ? `http://localhost:5000${cat.image_url}`
-          : null,
+        image: cat.image_url ? axios.defaults.baseURL + cat.image_url : null,
         imageFile: null,
+        order: cat.order || 0, // Set order value
       });
     } else {
-      setEditingCategory(null);
-      setForm({ name_en: "", name_ar: "", image: null, imageFile: null });
+      resetForm();
     }
     setIsModalOpen(true);
   };
 
-  const handleCancel = () => {
-    setIsModalOpen(false);
-    setForm({ name_en: "", name_ar: "", image: null, imageFile: null });
+  const resetForm = () => {
+    setForm({ name_en: "", name_ar: "", image: null, imageFile: null, order: 0 });
     setEditingCategory(null);
   };
 
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    resetForm();
+  };
+
   const handleInputChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: name === "order" ? Number(value) : value });
   };
 
   const handleSubmit = async () => {
@@ -81,6 +83,7 @@ const ServiceCategory = () => {
     const formData = new FormData();
     formData.append("name_en", form.name_en);
     formData.append("name_ar", form.name_ar);
+    formData.append("order", form.order); // Add order to formData
     if (form.imageFile) {
       formData.append("image", form.imageFile);
     }
@@ -88,17 +91,17 @@ const ServiceCategory = () => {
     try {
       setLoading(true);
       if (editingCategory) {
-        await axios.put(`${API_BASE}/${editingCategory.id}`, formData);
-        message.success("Category updated");
+        await axios.put(`/api/categories/${editingCategory.id}`, formData);
+        message.success("Category updated successfully");
       } else {
-        await axios.post(API_BASE, formData);
-        message.success("Category added");
+        await axios.post("/api/categories", formData);
+        message.success("Category added successfully");
       }
       fetchCategories();
       handleCancel();
     } catch (err) {
       console.error(err);
-      message.error("Failed to save category");
+      message.error("Failed to save category. Please check your server logs.");
     } finally {
       setLoading(false);
     }
@@ -106,8 +109,8 @@ const ServiceCategory = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${API_BASE}/${id}`);
-      message.success("Category deleted");
+      await axios.delete(`/api/categories/${id}`);
+      message.success("Category deleted successfully");
       fetchCategories();
     } catch (err) {
       console.error(err);
@@ -122,7 +125,7 @@ const ServiceCategory = () => {
       render: (image_url) =>
         image_url ? (
           <img
-            src={`http://localhost:5000${image_url}`}
+            src={axios.defaults.baseURL + image_url}
             alt="Service"
             className="h-12 w-12 object-cover rounded-full border"
           />
@@ -147,8 +150,10 @@ const ServiceCategory = () => {
         <>
           <Button icon={<EditOutlined />} onClick={() => openModal(cat)} />
           <Popconfirm
-            title="Are you sure to delete this category?"
+            title="Are you sure you want to delete this category?"
             onConfirm={() => handleDelete(cat.id)}
+            okText="Yes"
+            cancelText="No"
           >
             <Button danger icon={<DeleteOutlined />} className="ml-2" />
           </Popconfirm>
@@ -158,7 +163,7 @@ const ServiceCategory = () => {
   ];
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-white min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">Service Categories</h2>
         <Button
@@ -207,6 +212,18 @@ const ServiceCategory = () => {
             />
           </div>
           <div>
+            <label>Display Order</label>
+            <Input
+              name="order"
+              type="number"
+              value={form.order}
+              onChange={handleInputChange}
+              min={0}
+              max={999}
+              placeholder="Order (lower comes first)"
+            />
+          </div>
+          <div>
             <label>Upload Image (optional)</label>
             <Upload
               accept="image/*"
@@ -217,7 +234,7 @@ const ServiceCategory = () => {
                   image: URL.createObjectURL(file),
                   imageFile: file,
                 }));
-                return false; // Prevent auto-upload
+                return false;
               }}
             >
               <Button icon={<UploadOutlined />}>Choose Image</Button>

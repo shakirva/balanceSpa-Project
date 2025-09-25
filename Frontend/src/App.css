@@ -1,7 +1,10 @@
 /* font-family */
-@import url('https://fonts.googleapis.com/css2?family=Assistant:wght@200..800&display=swap');
-body{
-  font-family: "Assistant", sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
+body {
+  font-family: 'Assistant', 'Segoe UI', Arial, sans-serif;
+}
+input, select, textarea, button, option {
+  font-family: 'Assistant', 'Segoe UI', Arial, sans-serif !important;
 }
 
 .App {

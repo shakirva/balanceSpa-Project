@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Table, Button, Tag } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import axios from "axios";
+import axios from "../api/axios"; // ✅ use shared axios instance
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -9,8 +9,8 @@ export default function Users() {
   useEffect(() => {
     const fetchAdmins = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/admin", {
-          withCredentials: true,
+        const res = await axios.get("/api/admin", {
+          withCredentials: true, // ✅ still preserved
         });
 
         const formattedData = res.data.map((admin) => ({
@@ -32,7 +32,12 @@ export default function Users() {
     <div className="p-4">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">Admin Users</h2>
-        <Button type="primary" icon={<PlusOutlined />} className="bg-[#18181b] text-white px-4 font-semibold" disabled>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          className="bg-[#18181b] text-white px-4 font-semibold"
+          disabled
+        >
           Add User
         </Button>
       </div>

@@ -23,6 +23,8 @@ const { Option } = Select;
 
 export default function Treatments() {
   const [categories, setCategories] = useState([]);
+  const [filteredTreatments, setFilteredTreatments] = useState([]);
+  const location = window.location;
   const [modalOpen, setModalOpen] = useState(false);
   const [form] = Form.useForm();
   const [isEditing, setIsEditing] = useState(false);
@@ -30,17 +32,37 @@ export default function Treatments() {
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [priceFields, setPriceFields] = useState([{ duration: "", price: "" }]);
   const [treatmentImage, setTreatmentImage] = useState(null);
+  const [order, setOrder] = useState(0); // <-- Add order state
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    // Get selected service IDs from query param
+    const params = new URLSearchParams(location.search);
+    const ids = params.get("services")?.split(",").map(Number).filter(Boolean) || [];
+    fetchTreatments(ids);
+  }, [location.search]);
 
-  const fetchCategories = async () => {
+  const fetchTreatments = async (serviceIds) => {
     try {
       const res = await axios.get("/api/treatments");
-      setCategories(Array.isArray(res.data) ? res.data : []);
-    } catch {
-      message.error("Failed to load categories");
+      const validTreatments = Array.isArray(res.data)
+        ? res.data.filter(t => t.category_id && t.name_en)
+        : [];
+      if (serviceIds.length > 0) {
+        setFilteredTreatments(validTreatments.filter(t => serviceIds.includes(Number(t.category_id))));
+      } else {
+        setFilteredTreatments(validTreatments);
+      }
+      // For modal category dropdown
+      const uniqueCategories = [];
+      validTreatments.forEach(t => {
+        if (!uniqueCategories.some(c => c.id === t.category_id)) {
+          uniqueCategories.push({ id: t.category_id, name: t.category_name || t.name_en });
+        }
+      });
+      setCategories(uniqueCategories);
+    } catch (err) {
+      console.error("Failed to load treatments", err);
+      message.error("Failed to load treatments");
     }
   };
 
@@ -51,6 +73,7 @@ export default function Treatments() {
     setSelectedCategoryId(null);
     setPriceFields([{ duration: "", price: "" }]);
     setTreatmentImage(null);
+    setOrder(0); // <-- Reset order
     form.resetFields();
   };
 
@@ -61,6 +84,7 @@ export default function Treatments() {
     setSelectedCategoryId(categoryId);
     setPriceFields(treatment.prices);
     setTreatmentImage(treatment.image_url || null);
+    setOrder(treatment.order || 0); // <-- Set order value
     form.setFieldsValue({
       name_en: treatment.name_en,
       name_ar: treatment.name_ar,
@@ -77,15 +101,18 @@ export default function Treatments() {
         return message.error("Fill all price fields");
 
       const formData = new FormData();
-      formData.append("name_en", values.name_en);
-      formData.append("name_ar", values.name_ar);
-      formData.append("description_en", values.description_en);
-      formData.append("description_ar", values.description_ar);
-      formData.append("category_id", selectedCategoryId);
-      formData.append("prices", JSON.stringify(priceFields));
+      formData.append("name_en", values.name_en ?? "");
+      formData.append("name_ar", values.name_ar ?? "");
+      formData.append("description_en", values.description_en ?? "");
+      formData.append("description_ar", values.description_ar ?? "");
+      formData.append("category_id", selectedCategoryId ?? "");
+      formData.append("prices", JSON.stringify(priceFields ?? []));
+      formData.append("order", order ?? 0);
 
       if (treatmentImage && typeof treatmentImage !== "string") {
         formData.append("image", treatmentImage);
+      } else {
+        formData.append("image", null); // Always send image, even if null
       }
 
       const config = {
@@ -143,95 +170,76 @@ export default function Treatments() {
           Add Treatment
         </Button>
       </div>
-
+      {/* Clean Table block, single columns array */}
       <Table
-        dataSource={categories}
+        dataSource={filteredTreatments.sort((a, b) => (a.order || 0) - (b.order || 0))}
         rowKey="id"
         pagination={false}
-        expandable={{
-          expandedRowRender: (category) => (
-            <Table
-              dataSource={category.treatments}
-              rowKey="id"
-              pagination={false}
-              columns={[
-                {
-                  title: "Image",
-                  dataIndex: "image_url",
-                  render: (img) =>
-                    img ? (
-                      <img
-                        src={`http://localhost:5000${img}`}
-                        alt="treatment"
-                        className="w-16 h-12 object-cover rounded"
-                      />
-                    ) : (
-                      <div className="w-16 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-400">?</div>
-                    ),
-                },
-                { title: "Name", dataIndex: "name_en" },
-                { title: "Description", dataIndex: "description_en" },
-                {
-                  title: "Prices",
-                  dataIndex: "prices",
-                  render: (prices) => (
-                    <ul>
-                      {prices.map((p, idx) => (
-                        <li key={idx}>{p.duration}: {p.price} Qr</li>
-                      ))}
-                    </ul>
-                  ),
-                },
-                {
-                  title: "Actions",
-                  key: "actions",
-                  render: (_, treatment) => (
-                    <Space>
-                      <Button
-                        type="link"
-                        icon={<EditOutlined />}
-                        onClick={() => openEditModal(category.id, treatment)}
-                      >
-                        Edit
-                      </Button>
-                      <Popconfirm
-                        title="Delete treatment?"
-                        onConfirm={() => deleteTreatment(treatment.id)}
-                        okText="Yes"
-                        cancelText="No"
-                      >
-                        <Button type="link" icon={<DeleteOutlined />} danger>
-                          Delete
-                        </Button>
-                      </Popconfirm>
-                    </Space>
-                  ),
-                },
-              ]}
-            />
-          ),
-        }}
         columns={[
           {
-            dataIndex: "name",
-            render: (text, record) => (
-              <div className="flex items-center gap-3">
-                {record.image ? (
-                  <img
-                    src={`http://localhost:5000${record.image}`}
-                    alt={text}
-                    className="w-10 h-10 rounded-full"
-                  />
-                ) : (
-                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">?</div>
-                )}
-                <span className="font-semibold">{record.name}</span>
-              </div>
-            ),
+            title: "Image",
+            dataIndex: "image_url",
+            render: (img) => img ? (
+              <img
+                src={`http://localhost:5000${img}`}
+                alt="treatment"
+                className="w-16 h-12 object-cover rounded"
+              />
+            ) : (
+              <div className="w-16 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-400">?</div>
+            )
           },
+          {
+            title: "Name",
+            dataIndex: "name_en"
+          },
+          {
+            title: "Category",
+            dataIndex: "category_id",
+            render: (catId) => catId || "-"
+          },
+          {
+            title: "Description",
+            dataIndex: "description_en"
+          },
+          {
+            title: "Prices",
+            dataIndex: "prices",
+            render: (prices) => (
+              <ul>
+                {Array.isArray(prices) && prices.map((p, idx) => (
+                  <li key={idx}>{p.duration}: {p.price} Qr</li>
+                ))}
+              </ul>
+            )
+          },
+          {
+            title: "Actions",
+            key: "actions",
+            render: (_, treatment) => (
+              <Space>
+                <Button
+                  type="link"
+                  icon={<EditOutlined />}
+                  onClick={() => openEditModal(treatment.category_id, treatment)}
+                >
+                  Edit
+                </Button>
+                <Popconfirm
+                  title="Delete treatment?"
+                  onConfirm={() => deleteTreatment(treatment.id)}
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <Button type="link" icon={<DeleteOutlined />} danger>
+                    Delete
+                  </Button>
+                </Popconfirm>
+              </Space>
+            )
+          }
         ]}
       />
-
       <Modal
         title={isEditing ? "Edit Treatment" : "Add Treatment"}
         open={modalOpen}
@@ -273,18 +281,28 @@ export default function Treatments() {
             <Input.TextArea rows={2} style={{ direction: "rtl" }} />
           </Form.Item>
 
+          <Form.Item label="Display Order">
+            <Input
+              type="number"
+              min={0}
+              max={999}
+              value={order}
+              onChange={e => setOrder(Number(e.target.value))}
+              placeholder="Order (lower comes first)"
+            />
+          </Form.Item>
+
           <Form.Item label="Treatment Image (Optional)">
             <Upload
               accept="image/*"
               showUploadList={false}
               beforeUpload={(file) => {
-                setTreatmentImage(file); // ✅ Capture File
-                return false; // Prevent auto-upload
+                setTreatmentImage(file);
+                return false;
               }}
             >
               <Button icon={<UploadOutlined />}>Select Image</Button>
             </Upload>
-
             {treatmentImage && (
               <img
                 src={

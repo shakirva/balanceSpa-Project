@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../api/axios';
+import axios from '../api/axios'; // ✅ shared axios instance
 
 const Settings = () => {
   const [videoFile, setVideoFile] = useState(null);
   const [videoPreview, setVideoPreview] = useState(null);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/settings/get-video', { responseType: 'blob' })
+    axios
+      .get('/api/settings/get-video', { responseType: 'blob' }) // ✅ no hardcoded base URL
       .then((res) => {
         const videoUrl = URL.createObjectURL(res.data);
         setVideoPreview(videoUrl);
@@ -32,7 +33,9 @@ const Settings = () => {
     formData.append('video', videoFile);
 
     try {
-      await axios.post('http://localhost:5000/api/settings/upload-video', formData);
+      await axios.post('/api/settings/upload-video', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }, // ✅ required for file uploads
+      });
       alert('Video uploaded successfully!');
     } catch (err) {
       console.error(err);

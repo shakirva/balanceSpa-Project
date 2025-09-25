@@ -54,32 +54,60 @@ const BodySelection = ({ selectedParts, setSelectedParts, language = 'en' }) => 
   };
 
   return (
-    <div className="space-y-6">
+    <div
+      className={`space-y-6 w-full ${language === 'ar' ? 'rtl' : 'ltr'}`}
+      style={{ fontFamily: language === 'ar' ? "'Segoe UI', 'Tahoma', 'Arial', 'sans-serif'" : undefined }}
+    >
       {/* Body Views */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div
+        className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6"
+        style={{ maxWidth: 900, margin: '0 auto', width: '100%' }}
+      >
         {/* Front View */}
-        <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+        <div className="bg-white/5 p-2 md:p-4 rounded-xl border border-white/10 flex flex-col items-center">
           <h3 className="text-center font-medium mb-2 text-white/80">
             {translations.frontView}
           </h3>
-          <div className="relative mx-auto" style={{ width: '100%', height: '400px' }}>
+          <div
+            className="relative"
+            style={{
+              width: '100%',
+              maxWidth: 320,
+              minWidth: 180,
+              aspectRatio: '5/7',
+              height: 'auto',
+              margin: '0 auto',
+              direction: language === 'ar' ? 'rtl' : 'ltr',
+            }}
+          >
             <ImageHotspot
               src={bodyFront}
               hotspots={BODY_PARTS.front}
               selected={selectedParts}
               onChange={setSelectedParts}
-              selectedColor="rgba(74, 222, 128, 0.6)" // Green-400 with 60% opacity
-              selectedPattern="polka" // Can be 'polka', 'stripes', or 'solid'
+              selectedColor="rgba(74, 222, 128, 0.6)"
+              selectedPattern="polka"
             />
           </div>
         </div>
 
         {/* Back View */}
-        <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+        <div className="bg-white/5 p-2 md:p-4 rounded-xl border border-white/10 flex flex-col items-center">
           <h3 className="text-center font-medium mb-2 text-white/80">
             {translations.backView}
           </h3>
-          <div className="relative mx-auto" style={{ width: '100%', height: '400px' }}>
+          <div
+            className="relative"
+            style={{
+              width: '100%',
+              maxWidth: 320,
+              minWidth: 180,
+              aspectRatio: '5/7',
+              height: 'auto',
+              margin: '0 auto',
+              direction: language === 'ar' ? 'rtl' : 'ltr',
+            }}
+          >
             <ImageHotspot
               src={bodyBack}
               hotspots={BODY_PARTS.back}
@@ -101,19 +129,20 @@ const BodySelection = ({ selectedParts, setSelectedParts, language = 'en' }) => 
             {selectedParts.length} {language === 'ar' ? 'محدد' : 'selected'}
           </span>
         </h4>
-        
+
         {selectedParts.length > 0 ? (
           <div className="flex flex-wrap gap-3">
             {selectedParts.map(partId => {
               const allParts = [...BODY_PARTS.front, ...BODY_PARTS.back];
               const part = allParts.find(p => p.id === partId);
               return (
-                <div 
-                  key={partId} 
+                <div
+                  key={partId}
                   className="bg-green-900/30 text-green-100 px-3 py-2 rounded-lg text-sm flex items-center gap-2 group border border-green-800/50 hover:bg-green-900/50 transition-colors"
+                  style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}
                 >
                   {part?.label || partId}
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       removePart(partId);

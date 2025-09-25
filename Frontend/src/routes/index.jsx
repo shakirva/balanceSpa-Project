@@ -18,6 +18,8 @@ import DisplayLanding from "@pages/DisplayLanding";
 import Settings from "@pages/Settings";
 import Logout from "@pages/Logout"; // ✅ Add this import
 import ProtectedRoute from "@pages/ProtectedRoute";
+import FoodBeverages from "@pages/FoodBeverages";
+import FoodAdmin from "@pages/FoodAdmin";
 
 
 const Loadable = (Component) => (props) => {
@@ -56,10 +58,12 @@ export default function Router() {
     { path: "/", element: <DisplayLanding /> },
    
     { path: "/menu", element: <Services /> },
-    { path: "/brochure", element: <BrochureDisplay /> },
-    { path: "/booking", element: <BookingForm /> },
+  { path: "/brochure", element: <BrochureDisplay /> },
+  { path: "/food-beverages", element: <FoodBeverages /> },
+  { path: "/booking", element: <BookingForm /> },
     { path: "/pdf-preview", element: <PDFPreviewPage /> },
     { path: "/admin/login", element: <AdminLogin /> },
+    { path: "/food-admin", element: <FoodAdmin /> },
     { path: "*", element: <Navigate to="/404" replace /> },
   ]);
 }

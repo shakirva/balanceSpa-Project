@@ -1,18 +1,35 @@
-import React, { useEffect, useState } from 'react';
-import LanguageSelection from './LanguageSelection';
-import axios from '../api/axios';
+import React, { useEffect, useState } from "react";
+import LanguageSelection from "./LanguageSelection";
+import axios from "../api/axios"; // ✅ Using shared axios instance
 
 const DisplayLanding = () => {
   const [showLanguage, setShowLanguage] = useState(false);
   const [videoUrl, setVideoUrl] = useState(null);
 
   useEffect(() => {
-    axios
-      .get('http://localhost:5000/api/settings/get-video', { responseType: 'blob' })
-      .then((res) => {
-        const url = URL.createObjectURL(res.data);
-        setVideoUrl(url);
-      });
+    let objectUrl = null;
+
+    const fetchVideo = async () => {
+      try {
+        const res = await axios.get("/api/settings/get-video", {
+          responseType: "blob",
+        });
+
+        objectUrl = URL.createObjectURL(res.data);
+        setVideoUrl(objectUrl);
+      } catch (err) {
+        console.error("Error loading video:", err);
+        setVideoUrl(null);
+      }
+    };
+
+    fetchVideo();
+
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl); // ✅ Cleanup
+      }
+    };
   }, []);
 
   return (
@@ -26,7 +43,7 @@ const DisplayLanding = () => {
           playsInline
           className="w-full h-screen object-cover"
           onClick={() => setShowLanguage(true)}
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: "pointer" }}
         />
       )}
 

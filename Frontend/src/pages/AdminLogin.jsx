@@ -1,34 +1,28 @@
 import React, { useState } from "react";
 import { Form, Input, Button, Card, message } from "antd";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom"; // if using React Router
+import { useNavigate } from "react-router-dom";
+import axiosInstance, { BASE_URL } from "../api/axios"; // ✅ import centralized axios
 
 export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate(); // for redirect after login
+  const navigate = useNavigate();
 
   const handleLogin = async (values) => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
+      const { data } = await axiosInstance.post("/api/admin/login", values);
 
-      const data = await response.json();
+      message.success("Login successful!");
+      localStorage.setItem("adminToken", data.token);
 
-      if (response.ok) {
-        message.success("Login successful!");
-        localStorage.setItem("adminToken", data.token);
-
-        // redirect to dashboard
-        navigate("/appointment"); // change route as per your app
-      } else {
-        message.error(data.message || "Login failed");
-      }
+      navigate("/appointment"); // change to your dashboard route
     } catch (error) {
-      message.error("Server error. Please try again.");
+      if (error.response && error.response.data?.message) {
+        message.error(error.response.data.message);
+      } else {
+        message.error("Server error. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -58,6 +52,7 @@ export default function AdminLogin() {
               placeholder="admin@email.com"
             />
           </Form.Item>
+
           <Form.Item
             name="password"
             label="Password"
@@ -72,6 +67,7 @@ export default function AdminLogin() {
               placeholder="Password"
             />
           </Form.Item>
+
           <Form.Item>
             <Button
               type="primary"
@@ -85,5 +81,6 @@ export default function AdminLogin() {
         </Form>
       </Card>
     </div>
+    
   );
 }

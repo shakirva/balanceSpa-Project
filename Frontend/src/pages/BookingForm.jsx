@@ -9,14 +9,62 @@ import { useRef } from 'react';
 import { generateAppointmentPDF } from '@utils/pdfGenerator';
 import axios from '../api/axios';
 
-
-
-
+function SuccessModal({ onClose, language }) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        background: '#1f2937',
+        padding: '30px',
+        borderRadius: '10px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+        textAlign: 'center',
+        minWidth: '320px',
+        color: '#fff'
+      }}>
+        <h2 style={{ marginBottom: '10px' }}>{language === 'ar' ? 'تم الحجز بنجاح!' : 'Booking Successful!'}</h2>
+        <p>{language === 'ar' ? 'تم إرسال الاستشارة بنجاح.' : 'Your consultation has been submitted successfully.'}</p>
+      </div>
+    </div>
+  );
+}
 
 const BookingForm = () => {
   const location = useLocation();
-  const selectedLanguage = location.state?.language || 'en';
-  const translations = getTranslations(selectedLanguage).booking;
+  const params = new URLSearchParams(location.search);
+  const selectedServiceQS = params.get('service') || params.get('services');
+    // Removed duplicate declarations of query param variables
+    const selectedTreatmentQS = params.get('treatment') || params.get('treatments');
+    const selectedFoodsQS = params.get('food');
+    const selectedLanguageQS = params.get('lang');
+    const selectedLanguage = selectedLanguageQS || location.state?.language || 'en';
+    const translations = getTranslations(selectedLanguage).booking;
+    const selectedFoodsArr = selectedFoodsQS ? selectedFoodsQS.split(',').map(f => f.trim()).filter(Boolean) : [];
+  // Support multi-select for services and treatments
+  const selectedServicesArr = selectedServiceQS ? selectedServiceQS.split(',').map(s => s.trim()).filter(Boolean) : [];
+  const selectedTreatmentsArr = selectedTreatmentQS ? selectedTreatmentQS.split(',').map(t => t.trim()).filter(Boolean) : [];
+  const [foodsList, setFoodsList] = useState([]);
+
+  // Fetch all foods for name mapping
+  useEffect(() => {
+    axios.get('/api/food-beverages')
+      .then(res => setFoodsList(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setFoodsList([]));
+  }, []);
+  // Removed duplicate declarations of query param variables
 
 const [formData, setFormData] = useState({
     date: '',
@@ -35,48 +83,83 @@ const [formData, setFormData] = useState({
     promotional: false,
     signature: '',
     selectedBodyParts: [],
-    selectedService: '',
-    selectedTreatment: '',
+    selectedServices: selectedServicesArr,
+    selectedTreatments: selectedTreatmentsArr,
+    selectedFoods: selectedFoodsArr,
     selectedDuration: '',
     selectedPrice: ''
-  });
+});
+
+  // Pre-fill foods on mount (if needed for future dynamic updates)
+  useEffect(() => {
+    if (selectedFoodsArr.length > 0) {
+      setFormData(prev => ({ ...prev, selectedFoods: selectedFoodsArr }));
+    }
+  }, []);
 
 
   const [categories, setCategories] = useState([]);
-const [treatments, setTreatments] = useState([]);
+  const [treatments, setTreatments] = useState([]);
 const [isModalOpen, setIsModalOpen] = useState(false);
 
 
 
 
-// Fetch categories (services)
-useEffect(() => {
-  axios.get('/api/categories')
-    .then(res => {
-      setCategories(res.data);
-    })
-    .catch(err => console.error('Failed to fetch services:', err));
-}, []);
+  // Fetch categories (services) and auto-select if query param exists
+  useEffect(() => {
+    axios.get('/api/categories')
+      .then(res => {
+        setCategories(res.data);
+      })
+      .catch(err => console.error('Failed to fetch services:', err));
+  }, []);
 
-// Fetch treatments when a category is selected
-useEffect(() => {
-  if (formData.selectedService) {
-  axios
-  .get(`/api/treatments?category_id=${formData.selectedService}`)
-  .then(res => {
-    console.log("Full treatment response:", res.data);
-    if (Array.isArray(res.data) && res.data.length > 0) {
-      setTreatments(res.data[0].treatments || []);
+  // Set selectedService in formData after categories are loaded
+  useEffect(() => {
+    if (categories.length > 0 && selectedServicesArr.length > 0) {
+      setFormData(prev => ({ ...prev, selectedServices: selectedServicesArr }));
+    }
+  }, [categories, selectedServicesArr]);
+
+  // Fetch treatments when a category is selected and auto-select if query param exists
+  useEffect(() => {
+    if (formData.selectedServices && formData.selectedServices.length > 0) {
+      // Fetch treatments for all selected services
+      Promise.all(formData.selectedServices.map(serviceId =>
+        axios.get(`/api/treatments?category_id=${serviceId}`)
+      )).then(responses => {
+        // Flatten all treatments arrays
+        let allTreatments = [];
+        responses.forEach(res => {
+          let treatmentsArr = Array.isArray(res.data) ? res.data : [];
+          if (Array.isArray(res.data) && res.data.length > 0 && res.data[0].treatments) {
+            treatmentsArr = res.data[0].treatments;
+          }
+          allTreatments = allTreatments.concat(treatmentsArr);
+        });
+        setTreatments(allTreatments);
+        // Reset selectedTreatments if they are not in the new treatments list
+        setFormData(prev => ({
+          ...prev,
+          selectedTreatments: prev.selectedTreatments.filter(tid => allTreatments.some(t => String(t.id) === String(tid)))
+        }));
+      }).catch(err => {
+        setTreatments([]);
+        setFormData(prev => ({ ...prev, selectedTreatments: [] }));
+        console.error('Failed to fetch treatments:', err);
+      });
     } else {
       setTreatments([]);
+      setFormData(prev => ({ ...prev, selectedTreatments: [] }));
     }
-  })
-  .catch(err => console.error('Failed to fetch treatments:', err));
+  }, [formData.selectedServices]);
 
-  } else {
-    setTreatments([]);
-  }
-}, [formData.selectedService]);
+  // Set selectedTreatment in formData after treatments are loaded
+  useEffect(() => {
+    if (treatments.length > 0 && selectedTreatmentsArr.length > 0) {
+      setFormData(prev => ({ ...prev, selectedTreatments: selectedTreatmentsArr }));
+    }
+  }, [treatments, selectedTreatmentsArr]);
 
   
 
@@ -109,6 +192,10 @@ useEffect(() => {
       [name]: type === 'checkbox' ? checked : value
     }));
   };
+
+
+const sigPadRef = useRef();
+const dateInputRef = useRef();
 
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -145,17 +232,12 @@ const handleSubmit = async (e) => {
   }
 };
 
-  
-  
-
-  const sigPadRef = useRef();
-
-  // Only clear the pad on clear button
-  const handleClearSignature = () => {
-    if (sigPadRef.current) {
-      sigPadRef.current.clear();
-    }
-  };
+// Only clear the pad on clear button
+const handleClearSignature = () => {
+  if (sigPadRef.current) {
+    sigPadRef.current.clear();
+  }
+};
 
   const checkboxClass = (isActive) =>
     `flex items-center gap-2 px-4 py-2 rounded-full border transition text-sm font-medium cursor-pointer ${
@@ -167,8 +249,8 @@ const handleSubmit = async (e) => {
   const radioClass = (isActive) =>
     `px-4 py-2 rounded-full border transition text-sm font-medium cursor-pointer ${
       isActive
-        ? 'bg-zinc-800 text-white border-zinc-600 hover:bg-zinc-700'
-        : ' bg-blue-500 text-white border-blue-500'
+        ? 'bg-green-600 text-white border-green-600'
+        : 'bg-zinc-800 text-white border-zinc-600 hover:bg-zinc-700'
     }`;
 
   // Options data that changes based on language
@@ -260,39 +342,103 @@ const handleSubmit = async (e) => {
                         className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
                       />
                     </div>
-                   <div className="mb-4">
-  <label className="block font-semibold mb-2">Select Service</label>
-  <select
-    name="selectedService"
-    value={formData.selectedService}
-    onChange={handleChange}
-    className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
-  >
-    <option value="">Select a service</option>
-    {categories.map((cat) => (
-      <option key={cat.id} value={cat.id}>
-        {selectedLanguage === 'ar' ? cat.name_ar : cat.name_en}
-      </option>
-    ))}
-  </select>
-</div>
+                  {/* Selected Services Heading */}
+                  <div className="mb-2">
+                    <h2 className="font-bold text-white text-lg mb-2 tracking-wide">{selectedLanguage === 'ar' ? 'الخدمات المختارة' : 'Selected Services'}</h2>
+                    <div className="text-base text-white mb-2">
+                      {formData.selectedServices && formData.selectedServices.length > 0 ? (
+                        formData.selectedServices.map((serviceId, idx) => {
+                          const selectedCat = categories.find(cat => String(cat.id) === String(serviceId));
+                          return (
+                            <span key={serviceId + idx} className="mr-2">
+                              {selectedCat ? (selectedLanguage === 'ar' ? selectedCat.name_ar : selectedCat.name_en) : serviceId}
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span>{selectedLanguage === 'ar' ? 'لا توجد خدمة مختارة' : 'No service selected'}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <label className="block font-semibold mb-2">{selectedLanguage === 'ar' ? 'اختر الخدمات' : 'Select Services'}</label>
+                    <select
+                      name="selectedServices"
+                      value={formData.selectedServices}
+                      onChange={e => {
+                        const options = Array.from(e.target.selectedOptions, opt => opt.value);
+                        setFormData(prev => ({ ...prev, selectedServices: options }));
+                      }}
+                      className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
+                      multiple
+                      style={{ minHeight: '48px', fontSize: '1rem' }}
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {selectedLanguage === 'ar' ? cat.name_ar : cat.name_en}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {/* Selected Treatments Heading */}
+                  <div className="mb-2">
+                    <h2 className="font-bold text-white text-lg mb-2 tracking-wide">{selectedLanguage === 'ar' ? 'العلاجات المختارة' : 'Selected Treatments'}</h2>
+                    <div className="text-base text-white mb-2">
+                      {formData.selectedTreatments && formData.selectedTreatments.length > 0 ? (
+                        formData.selectedTreatments.map((treatId, idx) => {
+                          const selectedTreat = treatments.find(treat => String(treat.id) === String(treatId));
+                          return (
+                            <span key={treatId + idx} className="mr-2">
+                              {selectedTreat ? (selectedLanguage === 'ar' ? selectedTreat.name_ar : selectedTreat.name_en) : treatId}
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span>{selectedLanguage === 'ar' ? 'لا يوجد علاج مختار' : 'No treatment selected'}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <label className="block font-semibold mb-2">{selectedLanguage === 'ar' ? 'اختر العلاجات' : 'Select Treatments'}</label>
+                    <select
+                      name="selectedTreatments"
+                      value={formData.selectedTreatments}
+                      onChange={e => {
+                        const options = Array.from(e.target.selectedOptions, opt => opt.value);
+                        setFormData(prev => ({ ...prev, selectedTreatments: options }));
+                      }}
+                      className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
+                      multiple
+                      disabled={!formData.selectedServices || treatments.length === 0}
+                      style={{ minHeight: '48px', fontSize: '1rem' }}
+                    >
+                      {treatments.map((treat) => (
+                        <option key={treat.id} value={treat.id}>
+                          {selectedLanguage === 'ar' ? treat.name_ar : treat.name_en}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
  <div className="mb-4">
-  <label className="block font-semibold mb-2">Select  Treatment</label>
-<select
-  name="selectedTreatment"
-  value={formData.selectedTreatment}
-  onChange={handleChange}
-  className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
-  disabled={!formData.selectedService || treatments.length === 0}
->
-  <option value="">Select a treatment</option>
-  {treatments.map((treat) => (
-    <option key={treat.id} value={treat.id}>
-      {selectedLanguage === 'ar' ? treat.name_ar : treat.name_en}
-    </option>
-  ))}
-</select>
-</div>
+   <label className="block font-semibold mb-2">{selectedLanguage === 'ar' ? 'اختر الأطعمة والمشروبات' : 'Select Foods & Beverages'}</label>
+   <select
+     name="selectedFoods"
+     value={formData.selectedFoods}
+     onChange={e => {
+       const options = Array.from(e.target.selectedOptions, opt => opt.value);
+       setFormData(prev => ({ ...prev, selectedFoods: options }));
+     }}
+     className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
+     multiple
+     style={{ minHeight: '48px', fontSize: '1rem' }}
+   >
+     {foodsList.map(food => (
+       <option key={food.id} value={food.id}>
+         {selectedLanguage === 'ar' ? food.name_ar : food.name}
+       </option>
+     ))}
+   </select>
+ </div>
 
                   <div>
                   <label className="block font-semibold mb-2">
@@ -333,14 +479,25 @@ const handleSubmit = async (e) => {
 
 
                 
+
                     <div>
                       <label className="block font-semibold mb-2">{translations.labels.date}</label>
-                      <input
-                        type="date"
-                        name="date"
-                        className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
-                        onChange={handleChange}
-                      />
+                      <div
+                        className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white cursor-pointer"
+                        onClick={() => dateInputRef.current && dateInputRef.current.showPicker && dateInputRef.current.showPicker()}
+                        style={{ position: 'relative' }}
+                      >
+                        <input
+                          type="date"
+                          name="date"
+                          ref={dateInputRef}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          onChange={handleChange}
+                        />
+                        <span className="pointer-events-none select-none">
+                          {formData.date || (selectedLanguage === 'ar' ? 'اختر التاريخ' : 'Select date')}
+                        </span>
+                      </div>
                     </div>
 
                     {/* <div>
@@ -574,48 +731,10 @@ const handleSubmit = async (e) => {
 
                 
 {isModalOpen && (
-  <div
-    style={{
-      position: 'fixed',
-      top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000
-    }}
-  >
-    <div
-      style={{
-        background: '#1f2937', // Dark gray background
-        padding: '30px',
-        borderRadius: '10px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-        textAlign: 'center',
-        minWidth: '320px',
-        color: '#fff' // White text
-      }}
-    >
-      <h2 style={{ marginBottom: '10px' }}>Booking Successful!</h2>
-      <p>Your consultation has been submitted successfully.</p>
-      <button
-        onClick={() => setIsModalOpen(false)}
-        style={{
-          marginTop: '20px',
-          padding: '10px 24px',
-          backgroundColor: '#10b981', // Emerald green
-          color: '#fff',
-          fontWeight: 'bold',
-          border: 'none',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          transition: 'background 0.3s ease'
-        }}
-      >
-        OK
-      </button>
-    </div>
-  </div>
+  <SuccessModal onClose={() => {
+    setIsModalOpen(false);
+    navigate('/');
+  }} language={selectedLanguage} />
 )}
 
 
@@ -665,6 +784,6 @@ const handleSubmit = async (e) => {
       </div>
     </div>
   );
-};
+}
 
 export default BookingForm;
