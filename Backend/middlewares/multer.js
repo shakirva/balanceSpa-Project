@@ -6,7 +6,7 @@ import fs from 'fs';
 // Setup directory to store uploaded files
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const uploadDir = path.join(__dirname, '../uploads');
+const uploadDir = path.join(__dirname, '../public/pdf-assets');
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });

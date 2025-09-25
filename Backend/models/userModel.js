@@ -1,1 +1,1 @@
-// Placeholder for models/userModel.js
+// No model needed. All SQL handled manually in controllers.

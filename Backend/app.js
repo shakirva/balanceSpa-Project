@@ -1,3 +1,4 @@
+import foodBeverageRoutes from './routes/foodBeverageRoutes.js';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -14,6 +15,7 @@ const app = express();
 // ✅ 1. CORS
 app.use(cors({
   origin: 'http://localhost:3000',
+  
   credentials: true,
 }));
 
@@ -35,10 +37,12 @@ app.use('/api/treatments', treatmentRoutes); // ✅ this uses multer
 app.use('/api/customers', customerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/food-beverages', foodBeverageRoutes);
 
 // ✅ Static file serving
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/pdfs', express.static(path.join(__dirname, 'uploads/pdfs')));
+app.use('/pdf-assets', express.static(path.join(__dirname, 'public/pdf-assets')));
 
 // ✅ React frontend (if serving from backend)
 app.use(express.static(path.join(__dirname, 'views')));

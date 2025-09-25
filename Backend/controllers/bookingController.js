@@ -1,3 +1,16 @@
+
+// ✅ Delete a booking
+export const deleteBooking = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Optionally, delete associated PDF file from disk here if needed
+    await pool.query('DELETE FROM bookings WHERE id = ?', [id]);
+    res.status(200).json({ message: 'Booking deleted successfully' });
+  } catch (error) {
+    console.error('❌ Delete Booking Error:', error);
+    res.status(500).json({ error: 'Failed to delete booking' });
+  }
+};
 // 📁 controllers/bookingController.js
 import path from 'path';
 import pool from '../config/db.js';

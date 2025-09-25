@@ -2,12 +2,14 @@
 import pool from '../config/db.js';
 import fs from 'fs';
 import path from 'path';
+// import { ServiceCategory } from '../models/serviceCategory.js';
 
 // ✅ GET all categories
 export const getCategories = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM service_categories ORDER BY id DESC");
-    res.status(200).json(rows);
+    const query = "SELECT * FROM service_categories ORDER BY `order` ASC, id DESC";
+    const [categories] = await pool.query(query);
+    res.status(200).json(categories);
   } catch (err) {
     console.error("❌ Error fetching categories:", err.message);
     res.status(500).json({ error: "Failed to fetch categories", details: err.message });
@@ -17,13 +19,13 @@ export const getCategories = async (req, res) => {
 // ✅ POST: Add new category
 export const addCategory = async (req, res) => {
   try {
-    const { name_en, name_ar } = req.body;
+    const { name_en, name_ar, order = 0 } = req.body;
     const image_url = req.file ? `/uploads/${req.file.filename}` : null;
 
     if (!name_en) return res.status(400).json({ error: "English name is required" });
 
-    const query = "INSERT INTO service_categories (name_en, name_ar, image_url) VALUES (?, ?, ?)";
-    const [result] = await pool.execute(query, [name_en, name_ar, image_url]);
+    const query = "INSERT INTO service_categories (name_en, name_ar, image_url, `order`) VALUES (?, ?, ?, ?)";
+    const [result] = await pool.execute(query, [name_en, name_ar, image_url, order]);
 
     res.status(201).json({ message: "Category added", id: result.insertId, image_url });
   } catch (err) {
@@ -35,7 +37,7 @@ export const addCategory = async (req, res) => {
 // ✅ PUT: Update category
 export const updateCategory = async (req, res) => {
   try {
-    const { name_en, name_ar } = req.body;
+    const { name_en, name_ar, order } = req.body;
     const { id } = req.params;
 
     let image_url = null;
@@ -47,10 +49,10 @@ export const updateCategory = async (req, res) => {
     }
 
     const query = image_url
-      ? "UPDATE service_categories SET name_en = ?, name_ar = ?, image_url = ? WHERE id = ?"
-      : "UPDATE service_categories SET name_en = ?, name_ar = ? WHERE id = ?";
+      ? "UPDATE service_categories SET name_en = ?, name_ar = ?, image_url = ?, `order` = ? WHERE id = ?"
+      : "UPDATE service_categories SET name_en = ?, name_ar = ?, `order` = ? WHERE id = ?";
 
-    const values = image_url ? [name_en, name_ar, image_url, id] : [name_en, name_ar, id];
+    const values = image_url ? [name_en, name_ar, image_url, order, id] : [name_en, name_ar, order, id];
 
     await pool.execute(query, values);
     res.json({ message: "Category updated" });
@@ -74,5 +76,17 @@ export const deleteCategory = async (req, res) => {
   } catch (err) {
     console.error("❌ Error deleting:", err.message);
     res.status(500).json({ error: "Failed to delete category", details: err.message });
+  }
+};
+
+const getAllCategories = async (req, res) => {
+  try {
+    const categories = await ServiceCategory.findAll({
+      order: [['order', 'ASC']],
+      // ...other options...
+    });
+    res.json(categories);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch categories" });
   }
 };

@@ -1,10 +1,13 @@
+
 import express from 'express';
-import { createBooking, getAllBookings , updateAppointmentNotes, getAllUpdatedNotes} from '../controllers/bookingController.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { createBooking, getAllBookings, updateAppointmentNotes, getAllUpdatedNotes, deleteBooking } from '../controllers/bookingController.js';
 
 const router = express.Router();
+// DELETE /api/bookings/:id
+router.delete('/:id', deleteBooking);
 
 // ✅ Ensure uploads folder exists
 const uploadDir = 'uploads/pdfs';
