@@ -23,8 +23,8 @@ const ServiceCategory = () => {
   const [form, setForm] = useState({
     name_en: "",
     name_ar: "",
-    image: null,
-    imageFile: null,
+  media: null,
+  mediaFile: null,
     order: 0, // Add order field
   });
   const [loading, setLoading] = useState(false);
@@ -60,7 +60,7 @@ const ServiceCategory = () => {
   };
 
   const resetForm = () => {
-    setForm({ name_en: "", name_ar: "", image: null, imageFile: null, order: 0 });
+  setForm({ name_en: "", name_ar: "", media: null, mediaFile: null, order: 0 });
     setEditingCategory(null);
   };
 
@@ -84,8 +84,9 @@ const ServiceCategory = () => {
     formData.append("name_en", form.name_en);
     formData.append("name_ar", form.name_ar);
     formData.append("order", form.order); // Add order to formData
-    if (form.imageFile) {
-      formData.append("image", form.imageFile);
+    if (form.mediaFile) {
+      const isVideo = form.mediaFile.type.startsWith('video');
+      formData.append(isVideo ? "video" : "image", form.mediaFile);
     }
 
     try {
@@ -120,20 +121,44 @@ const ServiceCategory = () => {
 
   const columns = [
     {
-      title: "Image",
+      title: "Media",
       dataIndex: "image_url",
-      render: (image_url) =>
-        image_url ? (
+      render: (image_url, record) => {
+        if (!image_url) {
+          return (
+            <div className="h-12 w-12 flex items-center justify-center bg-gray-200 text-gray-500 rounded-full">
+              ?
+            </div>
+          );
+        }
+        // Try to detect if it's a video by extension
+        const url = axios.defaults.baseURL + image_url;
+        const isVideo = /\.(mp4|webm|ogg)$/i.test(url);
+        if (isVideo) {
+          return (
+            <video
+              src={url}
+              controls
+              style={{
+                height: '3rem',
+                width: '3rem',
+                objectFit: 'cover',
+                borderRadius: '9999px', // rounded-full
+                border: '1px solid #e5e7eb', // Tailwind border-gray-200
+                background: '#f3f4f6', // Tailwind bg-gray-100
+                display: 'block',
+              }}
+            />
+          );
+        }
+        return (
           <img
-            src={axios.defaults.baseURL + image_url}
+            src={url}
             alt="Service"
             className="h-12 w-12 object-cover rounded-full border"
           />
-        ) : (
-          <div className="h-12 w-12 flex items-center justify-center bg-gray-200 text-gray-500 rounded-full">
-            ?
-          </div>
-        ),
+        );
+      },
     },
     {
       title: "Name (EN / AR)",
@@ -224,27 +249,35 @@ const ServiceCategory = () => {
             />
           </div>
           <div>
-            <label>Upload Image (optional)</label>
+            <label>Upload Image or Video (optional)</label>
             <Upload
-              accept="image/*"
+              accept="image/*,video/*"
               showUploadList={false}
               beforeUpload={(file) => {
                 setForm((prev) => ({
                   ...prev,
-                  image: URL.createObjectURL(file),
-                  imageFile: file,
+                  media: URL.createObjectURL(file),
+                  mediaFile: file,
                 }));
                 return false;
               }}
             >
-              <Button icon={<UploadOutlined />}>Choose Image</Button>
+              <Button icon={<UploadOutlined />}>Choose Image or Video</Button>
             </Upload>
-            {form.image && (
-              <img
-                src={form.image}
-                alt="Preview"
-                className="h-16 w-16 object-cover rounded-full border mt-2"
-              />
+            {form.media && (
+              form.mediaFile && form.mediaFile.type.startsWith('video') ? (
+                <video
+                  src={form.media}
+                  controls
+                  className="h-16 w-16 object-cover rounded-full border mt-2"
+                />
+              ) : (
+                <img
+                  src={form.media}
+                  alt="Preview"
+                  className="h-16 w-16 object-cover rounded-full border mt-2"
+                />
+              )
             )}
           </div>
         </div>

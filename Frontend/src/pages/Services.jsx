@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from '../api/axios'; // ✅ use shared axios instance
 import { getTranslations } from '../utils/translations';
-import { Form, Input } from 'antd';
+import { Form, Input, Button } from 'antd';
+import AddCategoryForm from '../components/AddCategoryForm';
 
 const Services = () => {
   const location = useLocation();
@@ -16,7 +17,14 @@ const Services = () => {
   const translations = getTranslations(selectedLanguage);
 
   const [categories, setCategories] = useState([]);
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(false); // For mobile entry modal
+  const [showAddCategory, setShowAddCategory] = useState(false); // For add category modal
+  // Handler for successful category add
+  const handleCategoryAdded = () => {
+    setShowAddCategory(false);
+    setLoading(true);
+    axios.get('/api/categories').then(res => setCategories(res.data)).finally(() => setLoading(false));
+  };
   const [mobileInput, setMobileInput] = useState(initialMobile);
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState(0);
@@ -66,7 +74,7 @@ const Services = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-black text-white ${selectedLanguage === 'ar' ? 'rtl' : 'ltr'}`}>
+  <div className={`min-h-screen bg-black text-white ${selectedLanguage === 'ar' ? 'rtl' : 'ltr'}`}> 
       {/* Header */}
       <div className="py-4 px-6 border-b border-zinc-800 relative">
         <h1 className="text-2xl font-bold text-center mb-2">
@@ -105,7 +113,7 @@ const Services = () => {
           <p className="text-center text-gray-400">Loading services...</p>
         ) : (
           <div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 overflow-y-auto max-h-[calc(100vh-280px)] pr-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 overflow-y-auto max-h-[calc(100vh-280px)] pr-2 hide-scrollbar">
               {categories
                 .sort((a, b) => (a.order || 0) - (b.order || 0))
                 .map((category) => (
@@ -115,12 +123,33 @@ const Services = () => {
                     style={{ cursor: "pointer" }}
                     onClick={() => handleServiceSelect(category.id)}
                   >
-                    <div className="aspect-video rounded-lg overflow-hidden mb-3">
-                      <img
-                        src={category.image_url ? axios.defaults.baseURL + category.image_url : ''}
-                        alt={category.name_en}
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="aspect-video rounded-lg overflow-hidden mb-3 relative group">
+                      {category.media_type === 'video' || (category.media_url && category.media_url.match(/\.(mp4|webm|mov)$/i)) ? (
+                        <>
+                          <video
+                            src={category.media_url ? axios.defaults.baseURL + category.media_url : (category.image_url ? axios.defaults.baseURL + category.image_url : '')}
+                            className="w-full h-full object-cover"
+                            controls
+                            onError={e => { e.target.onerror = null; e.target.poster = '/default-treatment.jpg'; }}
+                          />
+                          {/* Play icon overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="bg-black bg-opacity-40 rounded-full p-3">
+                              <svg width="36" height="36" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="24" cy="24" r="24" fill="white" fillOpacity="0.7"/>
+                                <polygon points="20,16 34,24 20,32" fill="#111" />
+                              </svg>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <img
+                          src={category.media_url ? axios.defaults.baseURL + category.media_url : (category.image_url ? axios.defaults.baseURL + category.image_url : '')}
+                          alt={category.name_en}
+                          className="w-full h-full object-cover"
+                          onError={e => { e.target.onerror = null; e.target.src = '/default-treatment.jpg'; }}
+                        />
+                      )}
                     </div>
                     <h3 className="text-lg font-semibold">
                       {selectedLanguage === 'ar' ? category.name_ar : category.name_en}
@@ -174,17 +203,6 @@ const Services = () => {
         </div>
       )}
 
-      {/* Display Order Form Item */}
-      <Form.Item label="Display Order" name="order">
-        <Input
-          type="number"
-          min={0}
-          max={999}
-          value={order}
-          onChange={e => setOrder(Number(e.target.value))}
-          placeholder="Order (lower comes first)"
-        />
-      </Form.Item>
     </div>
   );
 };

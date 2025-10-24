@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getTranslations } from "../utils/translations";
 import { Button, Input, Modal, Upload, message, Table, Popconfirm, Form } from "antd";
 import { PlusOutlined, UploadOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
@@ -7,11 +7,24 @@ import axios from "../api/axios";
 
 const FoodBeverages = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const lang = params.get('lang') || 'en';
+  const services = params.get('services');
+  const treatments = params.get('treatments');
+  const durations = params.get('durations');
   const translations = getTranslations(lang);
   const [items, setItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    image: null,
+    imageFile: null,
+  });
 
   useEffect(() => {
     fetchItems();
@@ -155,7 +168,24 @@ const FoodBeverages = () => {
 
   return (
     <div className={`min-h-screen p-6 ${lang === 'ar' ? 'font-arabic' : ''} bg-gradient-to-b from-gray-900 to-black text-white flex flex-col items-center`}>
-      <h2 className="text-3xl font-bold mb-10 text-center tracking-wide">{lang === 'ar' ? 'الأطعمة والمشروبات' : 'Food & Beverages'}</h2>
+      {/* Header with Back Button */}
+      <div className="w-full max-w-6xl relative mb-8">
+        {/* Back Button */}
+        <div className={`absolute top-0 ${lang === 'ar' ? 'right-0' : 'left-0'}`}>
+          <button 
+            onClick={() => navigate(-1)} 
+            className="text-white hover:text-blue-400 flex items-center gap-2 text-lg font-medium transition-colors duration-300"
+          >
+            <svg width="24" height="24" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d={lang === 'ar' ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"} />
+            </svg>
+            <span>{lang === 'ar' ? 'الرجوع' : 'Back'}</span>
+          </button>
+        </div>
+        
+        {/* Title */}
+        <h2 className="text-3xl font-bold text-center tracking-wide">{lang === 'ar' ? 'الأطعمة والمشروبات' : 'Food & Beverages'}</h2>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10 justify-items-center w-full max-w-6xl">
         {items.length === 0 ? (
           <div className="col-span-full text-center text-gray-400 text-lg">{lang === 'ar' ? 'لا توجد أطعمة أو مشروبات متاحة.' : 'No food or beverages available.'}</div>
@@ -189,19 +219,12 @@ const FoodBeverages = () => {
           type="default"
           className="bg-white text-black px-10 py-4 rounded-full shadow-lg hover:bg-gray-100 text-xl font-bold flex items-center gap-2 border border-gray-300"
           onClick={() => {
-            if (selectedItems.length === 0) {
-              message.error(lang === 'ar' ? 'يرجى اختيار عنصر واحد على الأقل' : 'Please select at least one item');
-              return;
-            }
-            // Get previous selections from query params
-            const params = new URLSearchParams(window.location.search);
-            const services = params.get('services');
-            const treatments = params.get('treatments');
-            // Pass all selections to BookingForm
+            // Pass all selections to BookingForm including durations
             window.location.href = `/booking?lang=${lang}`
               + (services ? `&services=${services}` : '')
               + (treatments ? `&treatments=${treatments}` : '')
-              + `&food=${selectedItems.join(",")}`;
+              + (durations ? `&durations=${durations}` : '')
+              + (selectedItems.length > 0 ? `&food=${selectedItems.join(",")}` : '');
           }}
         >
           {lang === 'ar' ? 'احجز الآن' : 'Book Now'}

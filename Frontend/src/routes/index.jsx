@@ -50,12 +50,13 @@ export default function Router() {
     { path: "/treatment", element: <Treatments /> },
     { path: "/settings", element: <Settings /> },
     { path: "/users", element: <Users /> },
+    { path: "/food-admin", element: <FoodAdmin /> },
     { path: "/logout", element: <Logout /> },
     { path: "/404", element: <Page404 /> },
     { path: "*", element: <Navigate to="/404" replace /> },
   ],
 },
-    { path: "/", element: <DisplayLanding /> },
+  { path: "/", element: <ProtectedRoute><DisplayLanding /></ProtectedRoute> },
    
     { path: "/menu", element: <Services /> },
   { path: "/brochure", element: <BrochureDisplay /> },
@@ -63,7 +64,7 @@ export default function Router() {
   { path: "/booking", element: <BookingForm /> },
     { path: "/pdf-preview", element: <PDFPreviewPage /> },
     { path: "/admin/login", element: <AdminLogin /> },
-    { path: "/food-admin", element: <FoodAdmin /> },
+  // Removed duplicate /food-admin route from outside MainLayout
     { path: "*", element: <Navigate to="/404" replace /> },
   ]);
 }

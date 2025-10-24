@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Table,
   Button,
@@ -18,30 +18,49 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons";
 import axios from "../api/axios";
+import { useLocation } from "react-router-dom";
 
 const { Option } = Select;
 
 export default function Treatments() {
   const [categories, setCategories] = useState([]);
   const [filteredTreatments, setFilteredTreatments] = useState([]);
-  const location = window.location;
+  const location = useLocation();
   const [modalOpen, setModalOpen] = useState(false);
   const [form] = Form.useForm();
   const [isEditing, setIsEditing] = useState(false);
   const [editingTreatment, setEditingTreatment] = useState(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [priceFields, setPriceFields] = useState([{ duration: "", price: "" }]);
-  const [treatmentImage, setTreatmentImage] = useState(null);
+  const [treatmentMedia, setTreatmentMedia] = useState(null); // can be image or video
+  const [treatmentMediaType, setTreatmentMediaType] = useState(null); // 'image' or 'video'
   const [order, setOrder] = useState(0); // <-- Add order state
 
+  // Fetch categories for dropdown
   useEffect(() => {
-    // Get selected service IDs from query param
-    const params = new URLSearchParams(location.search);
-    const ids = params.get("services")?.split(",").map(Number).filter(Boolean) || [];
-    fetchTreatments(ids);
-  }, [location.search]);
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get('/api/categories');
+        setCategories(res.data);
+      } catch (err) {
+        console.error('Failed to load categories', err);
+        message.error('Failed to load categories');
+      }
+    };
+    fetchCategories();
+  }, []);
 
-  const fetchTreatments = async (serviceIds) => {
+  // Memoize fetchTreatments to avoid re-creation on every render
+  // Guard to prevent duplicate requests for the same query
+  const lastQueryRef = React.useRef("");
+  const fetchTreatments = useCallback(async (serviceIds) => {
+    console.log("fetchTreatments called with:", serviceIds);
+    const queryKey = JSON.stringify(serviceIds);
+    if (lastQueryRef.current === queryKey) {
+      console.log("Duplicate query, skipping fetch.");
+      return;
+    }
+    lastQueryRef.current = queryKey;
     try {
       const res = await axios.get("/api/treatments");
       const validTreatments = Array.isArray(res.data)
@@ -52,19 +71,21 @@ export default function Treatments() {
       } else {
         setFilteredTreatments(validTreatments);
       }
-      // For modal category dropdown
-      const uniqueCategories = [];
-      validTreatments.forEach(t => {
-        if (!uniqueCategories.some(c => c.id === t.category_id)) {
-          uniqueCategories.push({ id: t.category_id, name: t.category_name || t.name_en });
-        }
-      });
-      setCategories(uniqueCategories);
     } catch (err) {
       console.error("Failed to load treatments", err);
       message.error("Failed to load treatments");
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    console.log("useEffect triggered for Treatments, location.search:", location.search);
+    const params = new URLSearchParams(location.search);
+    const ids = params.get("services")?.split(",").map(Number).filter(Boolean) || [];
+    fetchTreatments(ids);
+    // Only run when location.search changes (query string changes)
+  }, [location.search, fetchTreatments]);
+
+  // ...existing code...
 
   const openModal = () => {
     setIsEditing(false);
@@ -72,7 +93,8 @@ export default function Treatments() {
     setModalOpen(true);
     setSelectedCategoryId(null);
     setPriceFields([{ duration: "", price: "" }]);
-    setTreatmentImage(null);
+  setTreatmentMedia(null);
+  setTreatmentMediaType(null);
     setOrder(0); // <-- Reset order
     form.resetFields();
   };
@@ -83,7 +105,13 @@ export default function Treatments() {
     setModalOpen(true);
     setSelectedCategoryId(categoryId);
     setPriceFields(treatment.prices);
-    setTreatmentImage(treatment.image_url || null);
+    if (treatment.media_url) {
+      setTreatmentMedia(treatment.media_url);
+      setTreatmentMediaType(treatment.media_type || (treatment.media_url.endsWith('.mp4') ? 'video' : 'image'));
+    } else {
+      setTreatmentMedia(null);
+      setTreatmentMediaType(null);
+    }
     setOrder(treatment.order || 0); // <-- Set order value
     form.setFieldsValue({
       name_en: treatment.name_en,
@@ -109,10 +137,14 @@ export default function Treatments() {
       formData.append("prices", JSON.stringify(priceFields ?? []));
       formData.append("order", order ?? 0);
 
-      if (treatmentImage && typeof treatmentImage !== "string") {
-        formData.append("image", treatmentImage);
+      if (treatmentMedia && typeof treatmentMedia !== "string") {
+        formData.append(
+          treatmentMediaType === 'video' ? "video" : "image",
+          treatmentMedia
+        );
       } else {
         formData.append("image", null); // Always send image, even if null
+        formData.append("video", null);
       }
 
       const config = {
@@ -131,7 +163,7 @@ export default function Treatments() {
         message.success("Treatment added");
       }
 
-      fetchCategories();
+  fetchTreatments([]); // Refresh treatments
       setModalOpen(false);
     } catch (err) {
       console.error("Upload failed:", err);
@@ -143,7 +175,7 @@ export default function Treatments() {
     try {
       await axios.delete(`/api/treatments/${id}`);
       message.success("Treatment deleted");
-      fetchCategories();
+  fetchTreatments([]); // Refresh treatments
     } catch {
       message.error("Delete failed");
     }
@@ -181,7 +213,7 @@ export default function Treatments() {
             dataIndex: "image_url",
             render: (img) => img ? (
               <img
-                src={`http://localhost:5000${img}`}
+                src={`https://balancespa.net${img}`}
                 alt="treatment"
                 className="w-16 h-12 object-cover rounded"
               />
@@ -262,7 +294,7 @@ export default function Treatments() {
             >
               {categories.map((cat) => (
                 <Option key={cat.id} value={cat.id}>
-                  {cat.name}
+                  {cat.name_en}
                 </Option>
               ))}
             </Select>
@@ -292,27 +324,40 @@ export default function Treatments() {
             />
           </Form.Item>
 
-          <Form.Item label="Treatment Image (Optional)">
+          <Form.Item label="Treatment Image/Video (Optional)">
             <Upload
-              accept="image/*"
+              accept="image/*,video/*"
               showUploadList={false}
               beforeUpload={(file) => {
-                setTreatmentImage(file);
+                setTreatmentMedia(file);
+                setTreatmentMediaType(file.type.startsWith('video') ? 'video' : 'image');
                 return false;
               }}
             >
-              <Button icon={<UploadOutlined />}>Select Image</Button>
+              <Button icon={<UploadOutlined />}>Select Image or Video</Button>
             </Upload>
-            {treatmentImage && (
-              <img
-                src={
-                  typeof treatmentImage === "string"
-                    ? `http://localhost:5000${treatmentImage}`
-                    : URL.createObjectURL(treatmentImage)
-                }
-                alt="Preview"
-                className="mt-2 w-24 h-16 object-cover rounded border"
-              />
+            {treatmentMedia && (
+              treatmentMediaType === 'image' ? (
+                <img
+                  src={
+                    typeof treatmentMedia === "string"
+                      ? `https://balancespa.net${treatmentMedia}`
+                      : URL.createObjectURL(treatmentMedia)
+                  }
+                  alt="Preview"
+                  className="mt-2 w-24 h-16 object-cover rounded border"
+                />
+              ) : (
+                <video
+                  src={
+                    typeof treatmentMedia === "string"
+                      ? `https://balancespa.net${treatmentMedia}`
+                      : URL.createObjectURL(treatmentMedia)
+                  }
+                  className="mt-2 w-24 h-16 object-cover rounded border"
+                  controls
+                />
+              )
             )}
           </Form.Item>
 

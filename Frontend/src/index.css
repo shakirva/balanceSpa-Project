@@ -1,6 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+  font-family: 'Noto Sans Arabic', sans-serif;
+}
+
+/* Ensure proper Arabic text rendering */
+[lang="ar"], .arabic-text {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif !important;
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: embed;
+}
 
 /* Print styles for PDF preview */
 @media print {
@@ -27,7 +41,7 @@
   /* Force background colors to print */
   * {
     -webkit-print-color-adjust: exact !important;
-    color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   
   /* Ensure the page uses full width */
@@ -39,7 +53,7 @@
 
 body {
   margin: 0;
-  font-family: "DM Sans", sans-serif;
+  font-family: Arial, sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -122,9 +136,14 @@ input[type="number"] {
   background: rgba(34, 197, 94, 0.9);
 }
 
-
-
-
+/* Hide scrollbar but keep scroll functionality */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
 
 /* ✅ Add this */
 .override-save-button {
@@ -147,4 +166,31 @@ input[type="number"] {
   background-color: #e5e7eb !important;  /* gray-200 */
   color: #6b7280 !important;             /* gray-500 */
   cursor: not-allowed;
+}
+
+/* Force Arial font for ALL elements to ensure Arabic support */
+* {
+  font-family: Arial, sans-serif !important;
+}
+
+body, h1, h2, h3, h4, h5, h6, label, input, textarea, select, button {
+  font-family: Arial, sans-serif !important;
+}
+
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Ensure proper UTF-8 encoding for Arabic text */
+html {
+  -webkit-font-feature-settings: "kern" 1;
+  -moz-font-feature-settings: "kern" 1;
+  -o-font-feature-settings: "kern" 1;
+  font-feature-settings: "kern" 1;
 }

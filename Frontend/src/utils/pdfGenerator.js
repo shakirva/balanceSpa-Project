@@ -43,11 +43,47 @@ const BODY_PARTS = {
   ]
 };
 
-const getSelectedPartLabels = (selectedBodyParts) => {
+const getSelectedPartLabels = (selectedBodyParts, language = 'en') => {
   const allParts = [...BODY_PARTS.front, ...BODY_PARTS.back];
+  
+  // Arabic translations for body parts
+  const bodyPartTranslations = {
+    'Head': 'الرأس',
+    'Neck': 'الرقبة',
+    'Left Shoulder': 'الكتف الأيسر',
+    'Right Shoulder': 'الكتف الأيمن',
+    'Chest': 'الصدر',
+    'Abdomen': 'البطن',
+    'Left Arm': 'الذراع اليسرى',
+    'Right Arm': 'الذراع اليمنى',
+    'Left Wrist': 'المعصم الأيسر',
+    'Right Wrist': 'المعصم الأيمن',
+    'Left Thigh': 'الفخذ الأيسر',
+    'Right Thigh': 'الفخذ الأيمن',
+    'Left Leg': 'الساق اليسرى',
+    'Right Leg': 'الساق اليمنى',
+    'Left Back Shoulders': 'أكتاف الظهر اليسرى',
+    'Right Back Shoulders': 'أكتاف الظهر اليمنى',
+    'Left Back Wrist': 'معصم الظهر الأيسر',
+    'Right Back Wrist': 'معصم الظهر الأيمن',
+    'Upper Back': 'أعلى الظهر',
+    'Lower Back': 'أسفل الظهر',
+    'Left Back Thigh': 'فخذ الظهر الأيسر',
+    'Right Back Thigh': 'فخذ الظهر الأيمن',
+    'Left Back Arm': 'ذراع الظهر اليسرى',
+    'Right Back Arm': 'ذراع الظهر اليمنى',
+    'Left Back Leg': 'ساق الظهر اليسرى',
+    'Right Back Leg': 'ساق الظهر اليمنى'
+  };
+  
   return selectedBodyParts.map(partId => {
     const part = allParts.find(p => p.id === partId);
-    return part?.label || partId;
+    if (!part) return partId;
+    
+    if (language === 'ar') {
+      return bodyPartTranslations[part.label] || part.label;
+    }
+    return part.label;
   });
 };
 
@@ -96,16 +132,115 @@ export const generateAppointmentPDF = async (formData) => {
   container.style.width = "1100px";
   container.style.minHeight = "1600px";
   container.style.background = "#fff";
-  container.style.fontFamily = "'Assistant', Arial, sans-serif";
+  container.style.fontFamily = "'Assistant', Arial, 'Tahoma', 'Microsoft Sans Serif', sans-serif";
   container.style.fontSize = "16px";
   container.style.color = "#222";
   container.style.borderRadius = "18px";
+  container.style.direction = formData.language === 'ar' ? 'rtl' : 'ltr';
 
   document.body.appendChild(container);
 
+  // Helper to get names for services/treatments/foods
+  const getNames = (ids, list, type) => {
+    if (!Array.isArray(ids)) return [];
+    return ids.map(id => {
+      const obj = list.find(item => String(item.id) === String(id));
+      if (!obj) return id;
+      if (type === 'service' || type === 'treatment') {
+        if (formData.language === 'ar') return obj.name_ar || obj.name_en || id;
+        return obj.name_en || obj.name_ar || id;
+      }
+      // foods
+      if (formData.language === 'ar') return obj.name_ar || obj.name || id;
+      return obj.name || obj.name_ar || id;
+    });
+  };
+
+  // Get names for selected services, treatments, foods
+  const selectedServicesNames = getNames(formData.selectedServices, formData.categories || [], 'service');
+  const selectedFoodsNames = getNames(formData.selectedFoods, formData.foodsList || [], 'food');
+  
+  // Generate treatment names with duration and price info
+  const selectedTreatmentsWithDuration = formData.selectedTreatments ? 
+    formData.selectedTreatments.map(treatmentId => {
+      const treatment = formData.treatments?.find(t => String(t.id) === String(treatmentId));
+      const durationInfo = formData.selectedDurations?.[treatmentId];
+      
+      if (treatment && durationInfo) {
+        const treatmentName = formData.language === 'ar' ? 
+          (treatment.name_ar || treatment.name_en) : 
+          (treatment.name_en || treatment.name_ar);
+        const currency = formData.language === 'ar' ? 'ريال' : 'QR';
+        return `${treatmentName} (${durationInfo.duration} - ${durationInfo.price} ${currency})`;
+      } else if (treatment) {
+        return formData.language === 'ar' ? 
+          (treatment.name_ar || treatment.name_en) : 
+          (treatment.name_en || treatment.name_ar);
+      }
+      return treatmentId;
+    }) : [];
+
+  // Arabic translations for PDF labels
+  const labels = {
+    title: formData.language === 'ar' ? '' : 'Customer Consultation',
+    personalDetails: formData.language === 'ar' ? 'البيانات الشخصية' : 'Personal Details',
+    name: formData.language === 'ar' ? 'الاسم' : 'Name',
+    phone: formData.language === 'ar' ? 'الهاتف' : 'Phone',
+    nationality: formData.language === 'ar' ? 'الجنسية' : 'Nationality',
+    selectedServices: formData.language === 'ar' ? 'الخدمات المختارة' : 'Selected Services',
+    selectedTreatments: formData.language === 'ar' ? 'العلاجات المختارة' : 'Selected Treatments',
+    selectedFoods: formData.language === 'ar' ? 'الأطعمة والمشروبات المختارة' : 'Selected Foods & Beverages',
+    knowAboutUs: formData.language === 'ar' ? 'كيف علمت عنا؟' : 'How did you know about us?',
+    source: formData.language === 'ar' ? 'المصدر' : 'Source',
+    socialMedia: formData.language === 'ar' ? 'وسائل التواصل الاجتماعي' : 'Social Media',
+    healthCondition: formData.language === 'ar' ? 'الحالة الصحية للعميل' : 'Customer Health Condition',
+    healthConditions: formData.language === 'ar' ? 'الحالات الصحية' : 'Health Conditions',
+    implants: formData.language === 'ar' ? 'الزراعات' : 'Implants',
+    implantDetails: formData.language === 'ar' ? 'تفاصيل الزراعات' : 'Implant Details',
+    massageOnly: formData.language === 'ar' ? 'للمساج فقط' : 'For Massage Only',
+    massagePressure: formData.language === 'ar' ? 'ضغط المساج' : 'Massage Pressure',
+    selectedBodyParts: formData.language === 'ar' ? 'أجزاء الجسم المختارة' : 'Selected Body Parts',
+    skinType: formData.language === 'ar' ? 'نوع البشرة' : 'Skin Type',
+    otherConcerns: formData.language === 'ar' ? 'مخاوف أخرى' : 'Other Concerns',
+    customerSignature: formData.language === 'ar' ? 'توقيع العميل' : 'Customer Signature',
+    noDetailsProvided: formData.language === 'ar' ? 'لم يتم تقديم تفاصيل' : 'No details provided',
+    notAvailable: formData.language === 'ar' ? 'غير متوفر' : 'N/A'
+  };
+
   container.innerHTML = `
     <style>
-      .pdf-main { display: flex; gap: 32px; padding: 48px 48px 12px 48px; background: #fff; border-radius: 18px; min-height: 1273px; }
+      .pdf-header {
+        text-align: center;
+        padding-top: 32px;
+        margin-bottom: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .pdf-logo {
+        width: 120px;
+        height: auto;
+        margin-bottom: 8px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .pdf-company {
+        font-size: 28px;
+        font-weight: bold;
+        color: #1e293b;
+        margin-bottom: 2px;
+        letter-spacing: 2px;
+      }
+      .pdf-title {
+        font-size: 22px;
+        font-weight: 600;
+        color: #2563eb;
+        margin-bottom: 18px;
+        letter-spacing: 1px;
+      }
+      .pdf-main { display: flex; gap: 32px; padding: 24px 48px 12px 48px; background: #fff; border-radius: 18px; min-height: 1273px; }
       .col { flex: 1; background: #fff; border-radius: 16px; padding: 32px; margin-bottom: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05);}
       .section-title { font-size: 18px; font-weight: bold; margin-bottom: 18px; color: #222; }
       .label { font-weight: 600; margin-bottom: 4px; color: #444; }
@@ -113,71 +248,84 @@ export const generateAppointmentPDF = async (formData) => {
       .line { height: 1px; background: #eee; margin: 16px 0; }
       .body-images { display: flex; gap: 32px; justify-content: center; align-items: flex-start; margin-bottom: 8px; }
       .selected-parts-list { color:#222; padding:8px 0 0 0; border-radius:8px; margin-bottom:8px; font-size:14px; }
-      .notes { margin-top:0; color:#b91c1c; font-weight:bold; text-align:center; }
-      .terms { margin-top:0; color:#444; font-size:14px; text-align:center; line-height:1.7; }
+      .notes { margin-top:0; color:#b91c1c; font-weight:bold; text-align:left; }
+      .terms { margin-top:0; color:#444; font-size:14px; text-align:left; line-height:1.7; }
+      .selected-list { margin-bottom: 12px; }
+      .selected-list span { display:inline-block; background:#f3f4f6; color:#222; padding:4px 12px; border-radius:12px; margin-right:6px; font-size:14px; font-weight:500; }
     </style>
+    <div class="pdf-header">
+      <img src="${logo}" class="pdf-logo" alt="BALANCE SPA Logo" />
+      <div class="pdf-company">BALANCE SPA</div>
+      <div class="pdf-title">${labels.title}</div>
+    </div>
     <div class="pdf-main">
       <div class="col">
-        <div class="section-title">Personal Details</div>
-        <div class="label">Name</div><div class="value">${formData.name || 'N/A'}</div>
-        <div class="label">Phone</div><div class="value">${formData.mobile || 'N/A'}</div>
-        <div class="label">Nationality</div><div class="value">${formData.nationality || 'N/A'}</div>
-        <div class="label">Service</div><div class="value">${formData.selectedService || 'N/A'}</div>
-        <div class="label">Treatment</div><div class="value">${formData.selectedTreatment || 'N/A'}</div>
+        <div class="section-title">${labels.personalDetails}</div>
+        <div class="label">${labels.name}</div><div class="value">${formData.name || labels.notAvailable}</div>
+        <div class="label">${labels.phone}</div><div class="value">${formData.mobile || labels.notAvailable}</div>
+        <div class="label">${labels.nationality}</div><div class="value">${formData.nationality || labels.notAvailable}</div>
+        <div class="label">${labels.selectedServices}</div>
+        <div class="selected-list">${selectedServicesNames.length ? selectedServicesNames.map(n => `<span>${n}</span>`).join('') : labels.notAvailable}</div>
+        <div class="label">${labels.selectedTreatments}</div>
+        <div class="selected-list">${selectedTreatmentsWithDuration.length ? selectedTreatmentsWithDuration.map(n => `<span>${n}</span>`).join('') : labels.notAvailable}</div>
+        <div class="label">${labels.selectedFoods}</div>
+        <div class="selected-list">${selectedFoodsNames.length ? selectedFoodsNames.map(n => `<span>${n}</span>`).join('') : labels.notAvailable}</div>
         <div class="line"></div>
-        <div class="section-title">How did you know about us?</div>
-        <div class="label">Source</div><div class="value">${Array.isArray(formData.knowFrom) ? formData.knowFrom.join(', ') : 'N/A'}</div>
-        <div class="label">Social Media</div><div class="value">${Array.isArray(formData.socialMedia) ? formData.socialMedia.join(', ') : 'N/A'}</div>
+        <div class="section-title">${labels.knowAboutUs}</div>
+        <div class="label">${labels.source}</div><div class="value">${Array.isArray(formData.knowFrom) ? formData.knowFrom.join(', ') : labels.notAvailable}</div>
+        <div class="label">${labels.socialMedia}</div><div class="value">${Array.isArray(formData.socialMedia) ? formData.socialMedia.join(', ') : labels.notAvailable}</div>
         <div class="line"></div>
-        <div class="section-title">Customer Health Condition</div>
-        <div class="label">Health Conditions</div><div class="value">${Array.isArray(formData.healthConditions) ? formData.healthConditions.join(', ') : 'N/A'}</div>
-        <div class="label">Implants</div><div class="value">${formData.implants || 'N/A'}</div>
-        ${formData.implants && formData.implants.toLowerCase() === 'yes' ? `<div class="label">Implant Details</div><div class="value">${formData.implantDetails || 'No details provided'}</div>` : ""}
+        <div class="section-title">${labels.healthCondition}</div>
+        <div class="label">${labels.healthConditions}</div><div class="value">${Array.isArray(formData.healthConditions) ? formData.healthConditions.join(', ') : labels.notAvailable}</div>
+        <div class="label">${labels.implants}</div><div class="value">${formData.implants || labels.notAvailable}</div>
+        ${formData.implants && formData.implants.toLowerCase() === 'yes' ? `<div class="label">${labels.implantDetails}</div><div class="value">${formData.implantDetails || labels.noDetailsProvided}</div>` : ""}
         <div class="line"></div>
-        <div class="section-title">For Massage Only</div>
-        <div class="label">Massage Pressure</div><div class="value">${formData.pressure || 'N/A'}</div>
+        <div class="section-title">${labels.massageOnly}</div>
+        <div class="label">${labels.massagePressure}</div><div class="value">${formData.pressure || labels.notAvailable}</div>
       </div>
       <div class="col">
-        <div class="section-title">Selected Body Parts</div>
+        <div class="section-title">${labels.selectedBodyParts}</div>
         <div class="body-images">
           ${renderBodySVG('front', selectedFront)}
           ${renderBodySVG('back', selectedBack)}
         </div>
         <div class="selected-parts-list">
-          ${getSelectedPartLabels(formData.selectedBodyParts).map(label => `<span style="color:#1e40af;padding:4px 10px;border-radius:12px;margin-right:4px;display:inline-block;">${label}</span>`).join('')}
+          ${getSelectedPartLabels(formData.selectedBodyParts, formData.language).map(label => `<span style="color:#222;padding:4px 10px;border-radius:12px;margin-right:4px;display:inline-block;background:#f3f4f6;">${label}</span>`).join('')}
         </div>
         <div class="line"></div>
-        <div class="section-title">Skin Type</div>
-        <div class="label">Skin Type</div><div class="value">${formData.skinType || 'N/A'}</div>
-        <div class="label">Other Concerns</div><div class="value">${formData.otherConcerns || 'N/A'}</div>
+        <div class="section-title">${labels.skinType}</div>
+        <div class="label">${labels.skinType}</div><div class="value">${formData.skinType || labels.notAvailable}</div>
+        <div class="label">${labels.otherConcerns}</div><div class="value">${formData.otherConcerns || labels.notAvailable}</div>
         <div class="line"></div>
-        <div class="section-title">Customer Signature</div>
+        <div class="section-title">${labels.customerSignature}</div>
         <div class="value">
-          ${formData.signature ? `<img src="${formData.signature}" style="width:150px;height:60px;border-radius:6px;border:1px solid #ccc;object-fit:contain;" />` : "No signature provided"}
+          ${formData.signature ? `<img src="${formData.signature}" style="width:150px;height:60px;border-radius:6px;border:1px solid #ccc;object-fit:contain;" />` : (formData.language === 'ar' ? 'لم يتم تقديم توقيع' : 'No signature provided')}
         </div>
-        <div style="margin-top:32px; text-align:right;">
-          <div class="notes" style="color:#b91c1c; font-weight:bold; text-align:right; font-size:15px; margin-bottom:8px;">Notes: Sexual behavior is prohibited by law and will not be tolerated by the management and the Authority.</div>
-          <div class="terms" style="color:#444; font-size:14px; text-align:right; line-height:1.7; max-width:600px; margin-left:auto;">The undersigned has read and understood the above contents and terms. The undersigned represent that the information provided is true and accurate and understands the importance of alerting the staff to any medical conditions or concern. The spa reserves the right to refuse treatment. I agree that either the spa, not its employee or management shall be liable or responsible for aggravation of any existing conditions as a result of my treatment. I am voluntarily undertaking this treatment.</div>
+        <div style="margin-top:32px; text-align:${formData.language === 'ar' ? 'right' : 'left'};">
+          <div class="notes" style="color:#b91c1c; font-weight:bold; text-align:${formData.language === 'ar' ? 'right' : 'left'}; font-size:15px; margin-bottom:8px;">${formData.language === 'ar' ? 'ملاحظات: السلوك الجنسي محظور قانونًا ولن تتسامح معه الإدارة والسلطة.' : 'Notes: Sexual behavior is prohibited by law and will not be tolerated by the management and the Authority.'}</div>
+          <div class="terms" style="color:#444; font-size:14px; text-align:${formData.language === 'ar' ? 'right' : 'left'}; line-height:1.7; max-width:600px; margin-${formData.language === 'ar' ? 'right' : 'left'}:0;">${formData.language === 'ar' ? 'لقد قرأ الموقع أدناه وفهم المحتويات والشروط المذكورة أعلاه. يمثل الموقع أدناه أن المعلومات المقدمة صحيحة ودقيقة ويفهم أهمية تنبيه الموظفين إلى أي حالات طبية أو مخاوف. يحتفظ المنتجع الصحي بالحق في رفض العلاج. أوافق على أن المنتجع الصحي وليس موظفيه أو إدارته مسؤولون عن تفاقم أي حالات موجودة نتيجة علاجي. أنا أقوم بهذا العلاج طوعًا.' : 'The undersigned has read and understood the above contents and terms. The undersigned represent that the information provided is true and accurate and understands the importance of alerting the staff to any medical conditions or concern. The spa reserves the right to refuse treatment. I agree that either the spa, not its employee or management shall be liable or responsible for aggravation of any existing conditions as a result of my treatment. I am voluntarily undertaking this treatment.'}</div>
         </div>
       </div>
     </div>
   `;
 
+  // Reduce scale for smaller image size
   const canvas = await html2canvas(container, {
-    scale: 2,
+    scale: 1.2, // lower scale for smaller output
     useCORS: true,
     backgroundColor: null,
     logging: false
   });
 
-  const imgData = canvas.toDataURL("image/png");
+  // Compress PNG dataURL
+  const imgData = canvas.toDataURL("image/jpeg", 0.7); // use JPEG and lower quality
   const pdf = new jsPDF({
     orientation: "portrait",
     unit: "px",
     format: [1100, 1600]
   });
 
-  pdf.addImage(imgData, "PNG", 0, 0, 1100, 1600);
+  pdf.addImage(imgData, "JPEG", 0, 0, 1100, 1600, undefined, 'FAST');
   document.body.removeChild(container);
 
   return pdf.output("blob");

@@ -6,36 +6,36 @@ import bodyBack from '../assets/body-backward.png';
 // Coordinates for both views with updated labels
 const BODY_PARTS = {
   front: [
-    { id: 'head_front', x: 50, y: 12, label: 'Head' },
-    { id: 'neck_front', x: 50, y: 20, label: 'Neck' },
-    { id: 'left_shoulder', x: 35, y: 25, label: 'Left Shoulder' },
-    { id: 'right_shoulder', x: 63, y: 25, label: 'Right Shoulder' },
-    { id: 'chest', x: 50, y: 30, label: 'Chest' },
-    { id: 'abdomen', x: 50, y: 45, label: 'Abdomen' },
-    { id: 'left_arm_front', x: 30, y: 35, label: 'Left Arm' },
-    { id: 'right_arm_front', x: 70, y: 35, label: 'Right Arm' },
-    { id: 'left_wrist', x: 30, y: 50, label: 'Left Wrist' },
-    { id: 'right_wrist', x: 70, y: 50, label: 'Right Wrist' },
-    { id: 'left_leg_front', x: 40, y: 62, label: 'Left Thigh' },
-    { id: 'right_leg_front', x: 60, y: 62, label: 'Right Thigh' },
-    { id: 'left_foot', x: 40, y: 78, label: 'Left Leg' },
-    { id: 'right_foot', x: 60, y: 78, label: 'Right Leg' }
+    { id: 'head_front', x: 50, y: 12, label_en: 'Head', label_ar: 'الرأس' },
+    { id: 'neck_front', x: 50, y: 20, label_en: 'Neck', label_ar: 'العنق' },
+    { id: 'left_shoulder', x: 35, y: 25, label_en: 'Left Shoulder', label_ar: 'الكتف الأيسر' },
+    { id: 'right_shoulder', x: 63, y: 25, label_en: 'Right Shoulder', label_ar: 'الكتف الأيمن' },
+    { id: 'chest', x: 50, y: 30, label_en: 'Chest', label_ar: 'الصدر' },
+    { id: 'abdomen', x: 50, y: 45, label_en: 'Abdomen', label_ar: 'البطن' },
+    { id: 'left_arm_front', x: 30, y: 35, label_en: 'Left Arm', label_ar: 'الذراع الأيسر' },
+    { id: 'right_arm_front', x: 70, y: 35, label_en: 'Right Arm', label_ar: 'الذراع الأيمن' },
+    { id: 'left_wrist', x: 30, y: 50, label_en: 'Left Wrist', label_ar: 'المعصم الأيسر' },
+    { id: 'right_wrist', x: 70, y: 50, label_en: 'Right Wrist', label_ar: 'المعصم الأيمن' },
+    { id: 'left_leg_front', x: 40, y: 62, label_en: 'Left Thigh', label_ar: 'الفخذ الأيسر' },
+    { id: 'right_leg_front', x: 60, y: 62, label_en: 'Right Thigh', label_ar: 'الفخذ الأيمن' },
+    { id: 'left_foot', x: 40, y: 78, label_en: 'Left Leg', label_ar: 'الساق الأيسر' },
+    { id: 'right_foot', x: 60, y: 78, label_en: 'Right Leg', label_ar: 'الساق الأيمن' }
   ],
   back: [
-    { id: 'head_back', x: 50, y: 12, label: 'Head' },
-    { id: 'neck_back', x: 50, y: 20, label: 'Neck' },
-    { id: 'left_back_shoulders', x: 35, y: 25, label: 'Left Back Shoulders' },
-    { id: 'right_back_shoulders', x: 63, y: 25, label: 'Right Back Shoulders' },
-    { id: 'left_back_wrist', x: 30, y: 50, label: 'Left Back Wrist' },
-    { id: 'right_back_wrist', x: 70, y: 50, label: 'Right Back Wrist' },
-    { id: 'upper_back', x: 50, y: 30, label: 'Upper Back' },
-    { id: 'lower_back', x: 50, y: 45, label: 'Lower Back' },
-    { id: 'left_back_thigh', x: 40, y: 60, label: 'Left Back Thigh' },
-    { id: 'Right_back_thigh', x: 60, y: 60, label: 'Right Back Thigh' },
-    { id: 'left_arm_back', x: 30, y: 35, label: 'Left Back Arm' },
-    { id: 'right_arm_back', x: 70, y: 35, label: 'Right Back Arm' },
-    { id: 'left_leg_back', x: 40, y: 75, label: 'Left Back Leg' },
-    { id: 'right_leg_back', x: 60, y: 75, label: 'Right Back Leg' }
+    { id: 'head_back', x: 50, y: 12, label_en: 'Head', label_ar: 'الرأس' },
+    { id: 'neck_back', x: 50, y: 20, label_en: 'Neck', label_ar: 'العنق' },
+    { id: 'left_back_shoulders', x: 35, y: 25, label_en: 'Left Back Shoulders', label_ar: 'الكتف الخلفي الأيسر' },
+    { id: 'right_back_shoulders', x: 63, y: 25, label_en: 'Right Back Shoulders', label_ar: 'الكتف الخلفي الأيمن' },
+    { id: 'left_back_wrist', x: 30, y: 50, label_en: 'Left Back Wrist', label_ar: 'المعصم الخلفي الأيسر' },
+    { id: 'right_back_wrist', x: 70, y: 50, label_en: 'Right Back Wrist', label_ar: 'المعصم الخلفي الأيمن' },
+    { id: 'upper_back', x: 50, y: 30, label_en: 'Upper Back', label_ar: 'الظهر العلوي' },
+    { id: 'lower_back', x: 50, y: 45, label_en: 'Lower Back', label_ar: 'الظهر السفلي' },
+    { id: 'left_back_thigh', x: 40, y: 60, label_en: 'Left Back Thigh', label_ar: 'الفخذ الخلفي الأيسر' },
+    { id: 'Right_back_thigh', x: 60, y: 60, label_en: 'Right Back Thigh', label_ar: 'الفخذ الخلفي الأيمن' },
+    { id: 'left_arm_back', x: 30, y: 35, label_en: 'Left Back Arm', label_ar: 'الذراع الخلفي الأيسر' },
+    { id: 'right_arm_back', x: 70, y: 35, label_en: 'Right Back Arm', label_ar: 'الذراع الخلفي الأيمن' },
+    { id: 'left_leg_back', x: 40, y: 75, label_en: 'Left Back Leg', label_ar: 'الساق الخلفي الأيسر' },
+    { id: 'right_leg_back', x: 60, y: 75, label_en: 'Right Back Leg', label_ar: 'الساق الخلفي الأيمن' }
   ]
 };
 
@@ -139,9 +139,8 @@ const BodySelection = ({ selectedParts, setSelectedParts, language = 'en' }) => 
                 <div
                   key={partId}
                   className="bg-green-900/30 text-green-100 px-3 py-2 rounded-lg text-sm flex items-center gap-2 group border border-green-800/50 hover:bg-green-900/50 transition-colors"
-                  style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}
-                >
-                  {part?.label || partId}
+                  style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}>
+                  {part ? (language === 'ar' ? part.label_ar : part.label_en) : partId}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -164,6 +163,6 @@ const BodySelection = ({ selectedParts, setSelectedParts, language = 'en' }) => 
       </div>
     </div>
   );
-};
+}
 
 export default BodySelection;

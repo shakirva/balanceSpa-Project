@@ -5,16 +5,13 @@ import axios from "../api/axios"; // ✅ Using shared axios instance
 const DisplayLanding = () => {
   const [showLanguage, setShowLanguage] = useState(false);
   const [videoUrl, setVideoUrl] = useState(null);
-
   useEffect(() => {
     let objectUrl = null;
-
     const fetchVideo = async () => {
       try {
         const res = await axios.get("/api/settings/get-video", {
           responseType: "blob",
         });
-
         objectUrl = URL.createObjectURL(res.data);
         setVideoUrl(objectUrl);
       } catch (err) {
@@ -22,12 +19,10 @@ const DisplayLanding = () => {
         setVideoUrl(null);
       }
     };
-
     fetchVideo();
-
     return () => {
       if (objectUrl) {
-        URL.revokeObjectURL(objectUrl); // ✅ Cleanup
+        URL.revokeObjectURL(objectUrl);
       }
     };
   }, []);

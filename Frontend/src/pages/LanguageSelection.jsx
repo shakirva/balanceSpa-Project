@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '@assets/logo.png';
+import ArabicText from '../components/ArabicText';
 
 const LanguageSelection = () => {
   const [selectedLanguage, setSelectedLanguage] = useState('en');
@@ -8,7 +9,7 @@ const LanguageSelection = () => {
 
   const languages = [
     { code: 'en', name: 'English' },
-    { code: 'ar', name: 'عربية' },
+    { code: 'ar', name: 'العربية' },
   ];
 
   const handleLanguageSelect = (languageCode) => {
@@ -18,7 +19,7 @@ const LanguageSelection = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center py-12 px-4">
+  <div className="min-h-screen bg-black flex items-center justify-center py-12 px-4" style={{ overflow: 'hidden' }}>
       <div className="flex flex-col items-center w-full max-w-lg mx-auto">
         {/* Logo */}
         <img src={logo} alt="Balance Logo" className="w-48" />
@@ -33,6 +34,10 @@ const LanguageSelection = () => {
               className={`bg-zinc-900 hover:bg-zinc-800 text-white font-medium py-6 px-6 rounded-lg shadow-lg flex flex-col items-center transition-transform duration-300 hover:scale-105 w-[180px] h-[180px] border ${
                 selectedLanguage === language.code ? 'border-white' : 'border-zinc-700'
               }`}
+              style={{ 
+                fontFamily: "'Noto Sans Arabic', sans-serif"
+              }}
+              lang={language.code === 'ar' ? 'ar' : 'en'}
             >
               {/* Icon */}
               <svg
@@ -61,7 +66,17 @@ const LanguageSelection = () => {
                 </defs>
               </svg>
               {/* Language Name */}
-              <span className="text-2xl">{language.name}</span>
+              <span 
+                className="text-2xl"
+                style={{
+                  fontFamily: language.code === 'ar' ? "'Noto Sans Arabic', sans-serif" : undefined,
+                  direction: language.code === 'ar' ? 'rtl' : 'ltr',
+                  unicodeBidi: language.code === 'ar' ? 'embed' : 'normal',
+                  fontWeight: language.code === 'ar' ? '600' : 'normal'
+                }}
+              >
+                {language.name}
+              </span>
             </button>
           ))}
         </div>

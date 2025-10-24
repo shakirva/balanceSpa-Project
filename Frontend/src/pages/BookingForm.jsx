@@ -9,11 +9,12 @@ import { useRef } from 'react';
 import { generateAppointmentPDF } from '@utils/pdfGenerator';
 import axios from '../api/axios';
 
+// ...existing code...
 function SuccessModal({ onClose, language }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
-    }, 1500);
+    }, 3500);
     return () => clearTimeout(timer);
   }, [onClose]);
   return (
@@ -49,10 +50,21 @@ const BookingForm = () => {
     // Removed duplicate declarations of query param variables
     const selectedTreatmentQS = params.get('treatment') || params.get('treatments');
     const selectedFoodsQS = params.get('food');
+    const selectedDurationsQS = params.get('durations');
     const selectedLanguageQS = params.get('lang');
     const selectedLanguage = selectedLanguageQS || location.state?.language || 'en';
     const translations = getTranslations(selectedLanguage).booking;
     const selectedFoodsArr = selectedFoodsQS ? selectedFoodsQS.split(',').map(f => f.trim()).filter(Boolean) : [];
+    
+    // Parse durations data - format: treatmentId:duration:price,treatmentId:duration:price
+    const selectedDurationsData = selectedDurationsQS ? 
+      selectedDurationsQS.split(',').reduce((acc, item) => {
+        const [treatmentId, duration, price] = item.split(':');
+        if (treatmentId && duration && price) {
+          acc[treatmentId] = { duration: decodeURIComponent(duration), price: decodeURIComponent(price) };
+        }
+        return acc;
+      }, {}) : {};
   // Support multi-select for services and treatments
   const selectedServicesArr = selectedServiceQS ? selectedServiceQS.split(',').map(s => s.trim()).filter(Boolean) : [];
   const selectedTreatmentsArr = selectedTreatmentQS ? selectedTreatmentQS.split(',').map(t => t.trim()).filter(Boolean) : [];
@@ -86,6 +98,7 @@ const [formData, setFormData] = useState({
     selectedServices: selectedServicesArr,
     selectedTreatments: selectedTreatmentsArr,
     selectedFoods: selectedFoodsArr,
+    selectedDurations: selectedDurationsData,
     selectedDuration: '',
     selectedPrice: ''
 });
@@ -101,6 +114,10 @@ const [formData, setFormData] = useState({
   const [categories, setCategories] = useState([]);
   const [treatments, setTreatments] = useState([]);
 const [isModalOpen, setIsModalOpen] = useState(false);
+const [showServiceDropdown, setShowServiceDropdown] = useState(false);
+const [showTreatmentDropdown, setShowTreatmentDropdown] = useState(false);
+const [showFoodDropdown, setShowFoodDropdown] = useState(false);
+
 
 
 
@@ -121,14 +138,15 @@ const [isModalOpen, setIsModalOpen] = useState(false);
     }
   }, [categories, selectedServicesArr]);
 
-  // Fetch treatments when a category is selected and auto-select if query param exists
+  // Guard to prevent repeated fetching when selectedServices changes due to setFormData
+  const lastFetchedServicesRef = useRef([]);
   useEffect(() => {
-    if (formData.selectedServices && formData.selectedServices.length > 0) {
-      // Fetch treatments for all selected services
+    const servicesKey = JSON.stringify(formData.selectedServices);
+    if (formData.selectedServices && formData.selectedServices.length > 0 && servicesKey !== JSON.stringify(lastFetchedServicesRef.current)) {
+      lastFetchedServicesRef.current = [...formData.selectedServices];
       Promise.all(formData.selectedServices.map(serviceId =>
         axios.get(`/api/treatments?category_id=${serviceId}`)
       )).then(responses => {
-        // Flatten all treatments arrays
         let allTreatments = [];
         responses.forEach(res => {
           let treatmentsArr = Array.isArray(res.data) ? res.data : [];
@@ -138,28 +156,56 @@ const [isModalOpen, setIsModalOpen] = useState(false);
           allTreatments = allTreatments.concat(treatmentsArr);
         });
         setTreatments(allTreatments);
-        // Reset selectedTreatments if they are not in the new treatments list
-        setFormData(prev => ({
-          ...prev,
-          selectedTreatments: prev.selectedTreatments.filter(tid => allTreatments.some(t => String(t.id) === String(tid)))
-        }));
       }).catch(err => {
         setTreatments([]);
-        setFormData(prev => ({ ...prev, selectedTreatments: [] }));
         console.error('Failed to fetch treatments:', err);
       });
-    } else {
+    } else if (!formData.selectedServices || formData.selectedServices.length === 0) {
       setTreatments([]);
-      setFormData(prev => ({ ...prev, selectedTreatments: [] }));
     }
   }, [formData.selectedServices]);
 
-  // Set selectedTreatment in formData after treatments are loaded
+  // Set selectedTreatment in formData only once after treatments are loaded, and only if value changes
   useEffect(() => {
     if (treatments.length > 0 && selectedTreatmentsArr.length > 0) {
-      setFormData(prev => ({ ...prev, selectedTreatments: selectedTreatmentsArr }));
+      const validTreatments = selectedTreatmentsArr.filter(tid => treatments.some(t => String(t.id) === String(tid)));
+      setFormData(prev => {
+        // Only update if value actually changes
+        if (JSON.stringify(prev.selectedTreatments) !== JSON.stringify(validTreatments)) {
+          return { ...prev, selectedTreatments: validTreatments };
+        }
+        return prev;
+      });
     }
   }, [treatments, selectedTreatmentsArr]);
+
+  // Auto-derive services from treatments when treatments exist but no explicit services
+  useEffect(() => {
+    if (selectedTreatmentsArr.length > 0 && categories.length > 0) {
+      // If no services explicitly selected, derive them from treatments
+      if (!selectedServicesArr || selectedServicesArr.length === 0) {
+        // Fetch all treatments to find category relationships
+        axios.get('/api/treatments')
+          .then(res => {
+            const allTreatments = Array.isArray(res.data) ? res.data : [];
+            const serviceIds = [...new Set(
+              selectedTreatmentsArr.map(treatmentId => {
+                const treatment = allTreatments.find(t => String(t.id) === String(treatmentId));
+                return treatment ? String(treatment.category_id) : null;
+              }).filter(Boolean)
+            )];
+            
+            if (serviceIds.length > 0) {
+              setFormData(prev => ({
+                ...prev,
+                selectedServices: serviceIds
+              }));
+            }
+          })
+          .catch(err => console.error('Failed to fetch treatments for service derivation:', err));
+      }
+    }
+  }, [selectedTreatmentsArr, selectedServicesArr, categories]);
 
   
 
@@ -193,12 +239,57 @@ const [isModalOpen, setIsModalOpen] = useState(false);
     }));
   };
 
+  // Handle duration selection for treatments
+  const handleDurationSelect = (treatmentId, duration, price) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedDurations: {
+        ...prev.selectedDurations,
+        [treatmentId]: { duration, price }
+      }
+    }));
+  };
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.dropdown-container')) {
+        setShowServiceDropdown(false);
+        setShowTreatmentDropdown(false);
+        setShowFoodDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
 
 const sigPadRef = useRef();
 const dateInputRef = useRef();
 
 const handleSubmit = async (e) => {
   e.preventDefault();
+
+  // Validation
+  if (!formData.selectedServices || formData.selectedServices.length === 0) {
+    alert(selectedLanguage === 'ar' ? 'يرجى اختيار خدمة واحدة على الأقل' : 'Please select at least one service');
+    return;
+  }
+
+  if (!formData.selectedTreatments || formData.selectedTreatments.length === 0) {
+    alert(selectedLanguage === 'ar' ? 'يرجى اختيار علاج واحد على الأقل' : 'Please select at least one treatment');
+    return;
+  }
+
+  if (!formData.name.trim()) {
+    alert(selectedLanguage === 'ar' ? 'يرجى إدخال الاسم' : 'Please enter your name');
+    return;
+  }
+
+  if (!formData.mobile.trim()) {
+    alert(selectedLanguage === 'ar' ? 'يرجى إدخال رقم الهاتف' : 'Please enter your mobile number');
+    return;
+  }
 
   let signatureDataUrl = '';
   if (sigPadRef.current) {
@@ -209,6 +300,9 @@ const handleSubmit = async (e) => {
     ...formData,
     signature: signatureDataUrl,
     language: selectedLanguage,
+    categories,
+    treatments,
+    foodsList,
   };
 
   const pdfBlob = await generateAppointmentPDF(pdfData);
@@ -220,14 +314,12 @@ const handleSubmit = async (e) => {
   form.append('pdf', pdfBlob, 'consultation.pdf');
 
   try {
-    await axiosInstance.post('/api/bookings/create', form, {
+    const response = await axiosInstance.post('/api/bookings/create', form, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
-
-    // Instead of navigating, show modal
     setIsModalOpen(true);
   } catch (err) {
-    alert('Failed to submit booking');
+    alert(selectedLanguage === 'ar' ? 'فشل في إرسال الحجز' : 'Failed to submit booking');
     console.error(err);
   }
 };
@@ -293,7 +385,7 @@ const handleClearSignature = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-black ${selectedLanguage === 'ar' ? 'rtl' : 'ltr'}`}>
+  <div className={`min-h-screen bg-black ${selectedLanguage === 'ar' ? 'rtl' : 'ltr'}`} dir={selectedLanguage === 'ar' ? 'rtl' : 'ltr'}>
       <div className="bg-black py-4 px-6 border-b border-zinc-800 re">
         <h1 className="text-2xl font-bold text-center mb-2 text-white">
           {getTranslations(selectedLanguage).common.title}
@@ -318,8 +410,25 @@ const handleClearSignature = () => {
 
       <div className="px-6 py-10 text-white">
         <div className="max-w-7xl mx-auto">
+          {/* Help message for direct visitors */}
+          {(!formData.selectedServices || formData.selectedServices.length === 0) && 
+           (!formData.selectedTreatments || formData.selectedTreatments.length === 0) && (
+            <div className="bg-blue-900/20 border border-blue-500/30 p-4 rounded-lg mb-6 text-center">
+              <div className="text-blue-300 mb-2">
+                <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <p className="text-white text-sm">
+                {selectedLanguage === 'ar' 
+                  ? 'يرجى اختيار الخدمات والعلاجات أولاً من القوائم أدناه لإنشاء حجزك.'
+                  : 'Please select services and treatments from the dropdowns below to create your booking.'}
+              </p>
+            </div>
+          )}
+          
           <div className="bg-zinc-900 p-6 rounded-lg shadow-lg">
-            <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-8">
+            <form onSubmit={handleSubmit} className={`grid md:grid-cols-2 gap-8 ${selectedLanguage === 'ar' ? 'rtl' : 'ltr'}`} dir={selectedLanguage === 'ar' ? 'rtl' : 'ltr'}>
               {/* Left Column */}
               <div className="space-y-6">
                 <div className="bg-zinc-900 p-6 border border-zinc-700 rounded-lg shadow-lg">
@@ -342,143 +451,294 @@ const handleClearSignature = () => {
                         className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
                       />
                     </div>
-                  {/* Selected Services Heading */}
-                  <div className="mb-2">
-                    <h2 className="font-bold text-white text-lg mb-2 tracking-wide">{selectedLanguage === 'ar' ? 'الخدمات المختارة' : 'Selected Services'}</h2>
-                    <div className="text-base text-white mb-2">
-                      {formData.selectedServices && formData.selectedServices.length > 0 ? (
-                        formData.selectedServices.map((serviceId, idx) => {
+                  {/* Services Selection Section */}
+                  <div className="mb-4">
+                    <h2 className="font-bold text-white text-lg mb-2 tracking-wide">{selectedLanguage === 'ar' ? 'الخدمات' : 'Services'}</h2>
+                    
+                    {/* Show selected services or dropdown */}
+                    {formData.selectedServices && formData.selectedServices.length > 0 ? (
+                      <div>
+                        <div className="text-sm text-gray-300 mb-2">{selectedLanguage === 'ar' ? 'الخدمات المختارة:' : 'Selected Services:'}</div>
+                        {formData.selectedServices.map((serviceId, idx) => {
                           const selectedCat = categories.find(cat => String(cat.id) === String(serviceId));
                           return (
-                            <span key={serviceId + idx} className="mr-2">
-                              {selectedCat ? (selectedLanguage === 'ar' ? selectedCat.name_ar : selectedCat.name_en) : serviceId}
-                            </span>
+                            <div key={serviceId + idx} className="mb-2 p-2 bg-zinc-800 rounded-lg border border-zinc-700 flex justify-between items-center">
+                              <span className="text-white font-medium">
+                                {selectedCat ? (selectedLanguage === 'ar' ? selectedCat.name_ar : selectedCat.name_en) : serviceId}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    selectedServices: prev.selectedServices.filter(id => id !== serviceId)
+                                  }));
+                                }}
+                                className="text-red-400 hover:text-red-300 text-sm"
+                              >
+                                ✕
+                              </button>
+                            </div>
                           );
-                        })
-                      ) : (
-                        <span>{selectedLanguage === 'ar' ? 'لا توجد خدمة مختارة' : 'No service selected'}</span>
-                      )}
-                    </div>
+                        })}
+                        <button
+                          type="button"
+                          onClick={() => setShowServiceDropdown(!showServiceDropdown)}
+                          className="text-blue-400 hover:text-blue-300 text-sm mt-2"
+                        >
+                          + {selectedLanguage === 'ar' ? 'إضافة خدمة أخرى' : 'Add Another Service'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="text-sm text-gray-400 mb-2">{selectedLanguage === 'ar' ? 'اختر الخدمات:' : 'Select Services:'}</div>
+                        <button
+                          type="button"
+                          onClick={() => setShowServiceDropdown(!showServiceDropdown)}
+                          className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white text-left hover:bg-zinc-700 transition"
+                        >
+                          {selectedLanguage === 'ar' ? 'اختر الخدمات...' : 'Choose Services...'}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Service Dropdown */}
+                    {showServiceDropdown && (
+                      <div className="dropdown-container mt-2 bg-zinc-800 border border-zinc-600 rounded-lg max-h-40 overflow-y-auto">
+                        {categories.map(category => (
+                          <button
+                            key={category.id}
+                            type="button"
+                            onClick={() => {
+                              const serviceId = String(category.id);
+                              if (!formData.selectedServices.includes(serviceId)) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  selectedServices: [...prev.selectedServices, serviceId]
+                                }));
+                              }
+                              setShowServiceDropdown(false);
+                            }}
+                            className="w-full text-left p-3 hover:bg-zinc-700 transition text-white border-b border-zinc-700 last:border-b-0"
+                          >
+                            {selectedLanguage === 'ar' ? category.name_ar : category.name_en}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="mb-4">
-                    <label className="block font-semibold mb-2">{selectedLanguage === 'ar' ? 'اختر الخدمات' : 'Select Services'}</label>
-                    <select
-                      name="selectedServices"
-                      value={formData.selectedServices}
-                      onChange={e => {
-                        const options = Array.from(e.target.selectedOptions, opt => opt.value);
-                        setFormData(prev => ({ ...prev, selectedServices: options }));
-                      }}
-                      className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
-                      multiple
-                      style={{ minHeight: '48px', fontSize: '1rem' }}
-                    >
-                      {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {selectedLanguage === 'ar' ? cat.name_ar : cat.name_en}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {/* Selected Treatments Heading */}
+
+                  {/* Treatments Selection Section */}
                   <div className="mb-2">
-                    <h2 className="font-bold text-white text-lg mb-2 tracking-wide">{selectedLanguage === 'ar' ? 'العلاجات المختارة' : 'Selected Treatments'}</h2>
-                    <div className="text-base text-white mb-2">
-                      {formData.selectedTreatments && formData.selectedTreatments.length > 0 ? (
-                        formData.selectedTreatments.map((treatId, idx) => {
+                    <h2 className="font-bold text-white text-lg mb-2 tracking-wide">{selectedLanguage === 'ar' ? 'العلاجات' : 'Treatments'}</h2>
+                    
+                    {/* Show selected treatments or dropdown */}
+                    {formData.selectedTreatments && formData.selectedTreatments.length > 0 ? (
+                      <div>
+                        <div className="text-sm text-gray-300 mb-2">{selectedLanguage === 'ar' ? 'العلاجات المختارة:' : 'Selected Treatments:'}</div>
+                        {formData.selectedTreatments.map((treatId, idx) => {
                           const selectedTreat = treatments.find(treat => String(treat.id) === String(treatId));
+                          const durationInfo = formData.selectedDurations[treatId];
                           return (
-                            <span key={treatId + idx} className="mr-2">
-                              {selectedTreat ? (selectedLanguage === 'ar' ? selectedTreat.name_ar : selectedTreat.name_en) : treatId}
-                            </span>
+                            <div key={treatId + idx} className="mb-3 p-3 bg-zinc-800 rounded-lg border border-zinc-700">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-white text-base">
+                                    {selectedTreat ? (selectedLanguage === 'ar' ? selectedTreat.name_ar : selectedTreat.name_en) : treatId}
+                                  </h4>
+                                  {durationInfo ? (
+                                    <div className="mt-2 text-sm">
+                                      <div className="flex justify-between items-center bg-blue-900/30 border border-blue-500/50 rounded p-2">
+                                        <span className="text-blue-300">
+                                          {selectedLanguage === 'ar' ? 'المدة: ' : 'Duration: '}
+                                          <span className="font-medium">{durationInfo.duration}</span>
+                                        </span>
+                                        <span className="text-blue-300 font-semibold">
+                                          {durationInfo.price} {selectedLanguage === 'ar' ? 'ريال' : 'QR'}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="mt-2">
+                                      <div className="text-xs text-gray-400 mb-2">{selectedLanguage === 'ar' ? 'اختر المدة:' : 'Select Duration:'}</div>
+                                      <div className="flex flex-wrap gap-2">
+                                        {[
+                                          { duration: '60 min', price: '220' },
+                                          { duration: '90 min', price: '250' },
+                                          { duration: '2 hrs', price: '300' }
+                                        ].map((option) => (
+                                          <button
+                                            key={option.duration}
+                                            type="button"
+                                            onClick={() => handleDurationSelect(treatId, option.duration, option.price)}
+                                            className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded transition"
+                                          >
+                                            {option.duration} - {option.price} {selectedLanguage === 'ar' ? 'ريال' : 'QR'}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      selectedTreatments: prev.selectedTreatments.filter(id => id !== treatId),
+                                      selectedDurations: Object.fromEntries(
+                                        Object.entries(prev.selectedDurations).filter(([id]) => id !== treatId)
+                                      )
+                                    }));
+                                  }}
+                                  className="text-red-400 hover:text-red-300 text-sm ml-2"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
                           );
-                        })
-                      ) : (
-                        <span>{selectedLanguage === 'ar' ? 'لا يوجد علاج مختار' : 'No treatment selected'}</span>
-                      )}
-                    </div>
+                        })}
+                        <button
+                          type="button"
+                          onClick={() => setShowTreatmentDropdown(!showTreatmentDropdown)}
+                          className="text-blue-400 hover:text-blue-300 text-sm mt-2"
+                        >
+                          + {selectedLanguage === 'ar' ? 'إضافة علاج آخر' : 'Add Another Treatment'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="text-sm text-gray-400 mb-2">{selectedLanguage === 'ar' ? 'اختر العلاجات:' : 'Select Treatments:'}</div>
+                        {formData.selectedServices && formData.selectedServices.length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowTreatmentDropdown(!showTreatmentDropdown)}
+                            className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white text-left hover:bg-zinc-700 transition"
+                          >
+                            {selectedLanguage === 'ar' ? 'اختر العلاجات...' : 'Choose Treatments...'}
+                          </button>
+                        ) : (
+                          <div className="text-sm text-gray-500 p-3 bg-zinc-800 rounded-lg border border-zinc-700">
+                            {selectedLanguage === 'ar' ? 'يرجى اختيار خدمة أولاً' : 'Please select a service first'}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Treatment Dropdown */}
+                    {showTreatmentDropdown && treatments.length > 0 && (
+                      <div className="dropdown-container mt-2 bg-zinc-800 border border-zinc-600 rounded-lg max-h-60 overflow-y-auto">
+                        {treatments.map(treatment => (
+                          <div key={treatment.id} className="border-b border-zinc-700 last:border-b-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const treatmentId = String(treatment.id);
+                                if (!formData.selectedTreatments.includes(treatmentId)) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    selectedTreatments: [...prev.selectedTreatments, treatmentId]
+                                  }));
+                                }
+                                setShowTreatmentDropdown(false);
+                              }}
+                              className="w-full text-left p-3 hover:bg-zinc-700 transition text-white"
+                            >
+                              <div className="font-medium">
+                                {selectedLanguage === 'ar' ? treatment.name_ar : treatment.name_en}
+                              </div>
+                              <div className="text-sm text-gray-400 mt-1">
+                                {selectedLanguage === 'ar' ? treatment.description_ar : treatment.description_en}
+                              </div>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Foods & Beverages Selection Section */}
                   <div className="mb-4">
-                    <label className="block font-semibold mb-2">{selectedLanguage === 'ar' ? 'اختر العلاجات' : 'Select Treatments'}</label>
-                    <select
-                      name="selectedTreatments"
-                      value={formData.selectedTreatments}
-                      onChange={e => {
-                        const options = Array.from(e.target.selectedOptions, opt => opt.value);
-                        setFormData(prev => ({ ...prev, selectedTreatments: options }));
-                      }}
-                      className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
-                      multiple
-                      disabled={!formData.selectedServices || treatments.length === 0}
-                      style={{ minHeight: '48px', fontSize: '1rem' }}
-                    >
-                      {treatments.map((treat) => (
-                        <option key={treat.id} value={treat.id}>
-                          {selectedLanguage === 'ar' ? treat.name_ar : treat.name_en}
-                        </option>
-                      ))}
-                    </select>
+                    <h2 className="font-bold text-white text-lg mb-2 tracking-wide">{selectedLanguage === 'ar' ? 'الأطعمة والمشروبات' : 'Foods & Beverages'}</h2>
+                    
+                    {/* Show selected foods or dropdown */}
+                    {formData.selectedFoods && formData.selectedFoods.length > 0 ? (
+                      <div>
+                        <div className="text-sm text-gray-300 mb-2">{selectedLanguage === 'ar' ? 'الأطعمة والمشروبات المختارة:' : 'Selected Foods & Beverages:'}</div>
+                        {formData.selectedFoods.map((foodId, idx) => {
+                          const selectedFood = foodsList.find(food => String(food.id) === String(foodId));
+                          return (
+                            <div key={foodId + idx} className="mb-2 p-2 bg-zinc-800 rounded-lg border border-zinc-700 flex justify-between items-center">
+                              <span className="text-white font-medium">
+                                {selectedFood ? (selectedLanguage === 'ar' ? selectedFood.name_ar : selectedFood.name) : foodId}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    selectedFoods: prev.selectedFoods.filter(id => id !== foodId)
+                                  }));
+                                }}
+                                className="text-red-400 hover:text-red-300 text-sm"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          );
+                        })}
+                        <button
+                          type="button"
+                          onClick={() => setShowFoodDropdown(!showFoodDropdown)}
+                          className="text-blue-400 hover:text-blue-300 text-sm mt-2"
+                        >
+                          + {selectedLanguage === 'ar' ? 'إضافة طعام أو مشروب آخر' : 'Add More Food/Beverage'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="text-sm text-gray-400 mb-2">{selectedLanguage === 'ar' ? 'اختر الأطعمة والمشروبات (اختياري):' : 'Select Foods & Beverages (Optional):'}</div>
+                        <button
+                          type="button"
+                          onClick={() => setShowFoodDropdown(!showFoodDropdown)}
+                          className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white text-left hover:bg-zinc-700 transition"
+                        >
+                          {selectedLanguage === 'ar' ? 'اختر الأطعمة والمشروبات...' : 'Choose Foods & Beverages...'}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Food Dropdown */}
+                    {showFoodDropdown && foodsList.length > 0 && (
+                      <div className="dropdown-container mt-2 bg-zinc-800 border border-zinc-600 rounded-lg max-h-40 overflow-y-auto">
+                        {foodsList.map(food => (
+                          <button
+                            key={food.id}
+                            type="button"
+                            onClick={() => {
+                              const foodId = String(food.id);
+                              if (!formData.selectedFoods.includes(foodId)) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  selectedFoods: [...prev.selectedFoods, foodId]
+                                }));
+                              }
+                              setShowFoodDropdown(false);
+                            }}
+                            className="w-full text-left p-3 hover:bg-zinc-700 transition text-white border-b border-zinc-700 last:border-b-0"
+                          >
+                            <div className="font-medium">
+                              {selectedLanguage === 'ar' ? food.name_ar : food.name}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                              {food.price} {selectedLanguage === 'ar' ? 'ريال' : 'QR'}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
- <div className="mb-4">
-   <label className="block font-semibold mb-2">{selectedLanguage === 'ar' ? 'اختر الأطعمة والمشروبات' : 'Select Foods & Beverages'}</label>
-   <select
-     name="selectedFoods"
-     value={formData.selectedFoods}
-     onChange={e => {
-       const options = Array.from(e.target.selectedOptions, opt => opt.value);
-       setFormData(prev => ({ ...prev, selectedFoods: options }));
-     }}
-     className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
-     multiple
-     style={{ minHeight: '48px', fontSize: '1rem' }}
-   >
-     {foodsList.map(food => (
-       <option key={food.id} value={food.id}>
-         {selectedLanguage === 'ar' ? food.name_ar : food.name}
-       </option>
-     ))}
-   </select>
- </div>
-
-                  <div>
-                  <label className="block font-semibold mb-2">
-                    {selectedLanguage === 'ar' ? 'اختر المدة' : 'Select Duration'}
-                  </label>
-                  <select
-                    name="selectedDuration"
-                    onChange={(e) => {
-                      const selected = durationOptions.find(
-                        (option) => option.duration.toString() === e.target.value
-                      );
-                      if (selected) {
-                        setFormData((prev) => ({
-                          ...prev,
-                          selectedDuration: selected.label,
-                          selectedPrice: selected.price
-                        }));
-                      }
-                    }}
-                    className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white"
-                  >
-                    <option value="">{selectedLanguage === 'ar' ? 'اختر المدة' : 'Select Duration'}</option>
-                    {durationOptions.map((option) => (
-                      <option key={option.label} value={option.duration}>
-                        {option.label} - {option.price} Qr
-                      </option>
-                    ))}
-                  </select>
-
-                  {/* {formData.selectedDuration && (
-                    <div className="mt-2 text-sm text-gray-300">
-                      {selectedLanguage === 'ar' ? 'المدة المختارة:' : 'Selected Duration:'} {formData.selectedDuration} <br />
-                      {selectedLanguage === 'ar' ? 'السعر:' : 'Price:'} {formData.selectedPrice} Qr
-                    </div>
-                  )} */}
-                </div>
-
-
-
-                
 
                     <div>
                       <label className="block font-semibold mb-2">{translations.labels.date}</label>
@@ -731,10 +991,13 @@ const handleClearSignature = () => {
 
                 
 {isModalOpen && (
-  <SuccessModal onClose={() => {
-    setIsModalOpen(false);
-    navigate('/');
-  }} language={selectedLanguage} />
+  <SuccessModal
+    onClose={() => {
+      setIsModalOpen(false);
+      navigate('/');
+    }}
+    language={selectedLanguage}
+  />
 )}
 
 
@@ -770,10 +1033,9 @@ const handleClearSignature = () => {
                </div>
 
                
-
                 <button
                   type="submit"
-                  className="mt-6 w-full bg-white text-black py-2 rounded-md font-medium transition"
+                  className="mt-6 w-full bg-white text-black py-2 rounded-md font-medium transition hover:bg-gray-200"
                 >
                   {selectedLanguage === 'ar' ? 'إرسال الاستشارة' : 'Submit Consultation'}
                 </button>

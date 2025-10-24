@@ -1,33 +1,37 @@
+
 import React, { useState } from "react";
 import { Modal, Form, Input, Upload, Button, message, Card } from "antd";
 import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
+import axios from '../api/axios';
 
 const { TextArea } = Input;
 
 const AddCategoryForm = ({ visible, onCancel, onSuccess }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState(null);
+  const [mediaUrl, setMediaUrl] = useState(null); // can be image or video
+  const [mediaType, setMediaType] = useState(null); // 'image' or 'video'
+  const [mediaFile, setMediaFile] = useState(null); // store the actual File object
   const [uploading, setUploading] = useState(false);
 
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const categoryData = {
-        id: Date.now(),
-        name: values.name,
-        description: values.description || "",
-        image: imageUrl,
-        servicesCount: 0,
-        createdAt: new Date().toISOString(),
-      };
+      const formData = new FormData();
+      formData.append('name_en', values.name);
+      formData.append('name_ar', values.name); // You may want to add a separate field for Arabic name
+      formData.append('order', values.order || 0);
+      formData.append('description', values.description || '');
+      if (mediaFile && mediaType) {
+        formData.append(mediaType === 'video' ? 'video' : 'image', mediaFile);
+      }
 
-      console.log('New Category:', categoryData);
+      // Use your backend endpoint for category creation
+      await axios.post('/api/categories', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       message.success("Category added successfully!");
-      onSuccess(categoryData);
+      onSuccess();
       handleReset();
     } catch (error) {
       message.error("Failed to add category");
@@ -38,23 +42,29 @@ const AddCategoryForm = ({ visible, onCancel, onSuccess }) => {
 
   const handleReset = () => {
     form.resetFields();
-    setImageUrl(null);
+  setMediaUrl(null);
+  setMediaType(null);
     onCancel();
   };
 
-  const handleImageChange = (info) => {
+  const handleMediaChange = (info) => {
     if (info.file.status === "done" || info.file.status === "uploading") {
-      // Use local preview
+      const file = info.file.originFileObj;
+      const type = file.type.startsWith('video') ? 'video' : 'image';
+      setMediaType(type);
+      setMediaFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
-        setImageUrl(e.target.result);
+        setMediaUrl(e.target.result);
       };
-      reader.readAsDataURL(info.file.originFileObj);
+      reader.readAsDataURL(file);
     }
   };
 
-  const removeImage = () => {
-    setImageUrl(null);
+  const removeMedia = () => {
+    setMediaUrl(null);
+    setMediaType(null);
+    setMediaFile(null);
   };
 
   return (
@@ -104,21 +114,29 @@ const AddCategoryForm = ({ visible, onCancel, onSuccess }) => {
           />
         </Form.Item>
 
-        {/* Image Upload */}
-        <Form.Item label="Category Image (Optional)">
+        {/* Media Upload (Image or Video) */}
+  <Form.Item label="Upload Image or Video (optional)">
           <div className="space-y-4">
-            {imageUrl ? (
+            {mediaUrl ? (
               <div className="relative">
-                <img
-                  src={imageUrl}
-                  alt="Category preview"
-                  className="w-32 h-32 object-cover rounded-lg border"
-                />
+                {mediaType === 'image' ? (
+                  <img
+                    src={mediaUrl}
+                    alt="Category preview"
+                    className="w-32 h-32 object-cover rounded-lg border"
+                  />
+                ) : (
+                  <video
+                    src={mediaUrl}
+                    controls
+                    className="w-32 h-32 object-cover rounded-lg border"
+                  />
+                )}
                 <Button
                   type="text"
                   danger
                   size="small"
-                  onClick={removeImage}
+                  onClick={removeMedia}
                   className="absolute -top-2 -right-2 bg-white rounded-full shadow-md"
                 >
                   ×
@@ -126,21 +144,16 @@ const AddCategoryForm = ({ visible, onCancel, onSuccess }) => {
               </div>
             ) : (
               <Upload
-                accept="image/*"
+                accept="image/*,video/*"
                 showUploadList={false}
                 beforeUpload={() => false}
-                onChange={handleImageChange}
+                onChange={handleMediaChange}
               >
-                <div className="w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center hover:border-blue-500 transition-colors">
-                  <UploadOutlined className="text-2xl text-gray-400 mb-2" />
-                  <span className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                    Upload Image
-                  </span>
-                </div>
+                <Button icon={<UploadOutlined />}>Choose Image or Video</Button>
               </Upload>
             )}
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Recommended size: 300x300px. Max file size: 2MB.
+              You can upload an image (JPG, PNG, etc.) or a video (MP4, WEBM, MOV). Only one file allowed.
             </p>
           </div>
         </Form.Item>
@@ -157,12 +170,20 @@ const AddCategoryForm = ({ visible, onCancel, onSuccess }) => {
               Preview
             </h4>
             <div className="flex items-center gap-3">
-              {imageUrl ? (
-                <img
-                  src={imageUrl}
-                  alt="Preview"
-                  className="w-12 h-12 object-cover rounded-full border"
-                />
+              {mediaUrl ? (
+                mediaType === 'image' ? (
+                  <img
+                    src={mediaUrl}
+                    alt="Preview"
+                    className="w-12 h-12 object-cover rounded-full border"
+                  />
+                ) : (
+                  <video
+                    src={mediaUrl}
+                    className="w-12 h-12 object-cover rounded-full border"
+                    controls
+                  />
+                )
               ) : (
                 <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
                   <span className="text-gray-500 dark:text-gray-400 text-lg">?</span>

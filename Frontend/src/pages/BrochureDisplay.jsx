@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axiosInstance, { BASE_URL } from '../api/axios';
 import { getTranslations } from '../utils/translations';
@@ -6,6 +6,8 @@ import { getTranslations } from '../utils/translations';
 const BrochureDisplay = () => {
   // Multi-select treatments and checkout
   const [selectedTreatments, setSelectedTreatments] = useState([]);
+  // Duration selections - format: { treatmentId: { duration: price } }
+  const [selectedDurations, setSelectedDurations] = useState({});
 
   const handleSelect = (id) => {
     setSelectedTreatments(prev =>
@@ -15,13 +17,42 @@ const BrochureDisplay = () => {
     );
   };
 
+  const handleDurationSelect = (treatmentId, duration, price) => {
+    setSelectedDurations(prev => ({
+      ...prev,
+      [treatmentId]: prev[treatmentId]?.duration === duration 
+        ? undefined // Unselect if clicking the same duration
+        : { duration, price }
+    }));
+  };
+
   const handleCheckout = () => {
     if (selectedTreatments.length === 0) {
-      alert('Please select at least one treatment');
+      alert(selectedLanguage === 'ar' ? 'يرجى اختيار علاج واحد على الأقل' : 'Please select at least one treatment');
       return;
     }
-    // Pass selected services and treatments to FoodBeverages page
-    navigate(`/food-beverages?lang=${selectedLanguage}&services=${selectedServices.join(",")}&treatments=${selectedTreatments.join(",")}`);
+
+    // Check if all selected treatments have duration selected
+    const treatmentsWithoutDuration = selectedTreatments.filter(treatmentId => !selectedDurations[treatmentId]);
+    if (treatmentsWithoutDuration.length > 0) {
+      alert(selectedLanguage === 'ar' ? 'يرجى اختيار المدة الزمنية لجميع العلاجات المحددة' : 'Please select duration for all selected treatments');
+      return;
+    }
+
+    // Format duration data for URL
+    const durationsParam = selectedTreatments.map(treatmentId => {
+      const duration = selectedDurations[treatmentId];
+      return `${treatmentId}:${duration.duration}:${duration.price}`;
+    }).join(',');
+
+    // Determine services to pass - either from selectedServices or current category
+    let servicesToPass = selectedServices;
+    if (servicesToPass.length === 0 && selectedCategory) {
+      servicesToPass = [selectedCategory];
+    }
+
+    // Pass selected services, treatments, and durations to FoodBeverages page
+    navigate(`/food-beverages?lang=${selectedLanguage}&services=${servicesToPass.join(",")}&treatments=${selectedTreatments.join(",")}&durations=${encodeURIComponent(durationsParam)}`);
   };
   const location = useLocation();
   const navigate = useNavigate();
@@ -34,61 +65,89 @@ const BrochureDisplay = () => {
 
   const translations = getTranslations(selectedLanguage);
   const [categories, setCategories] = useState([]);
-  const [treatments, setTreatments] = useState([]);
+  const [allTreatments, setAllTreatments] = useState([]);
   const [category, setCategory] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [tabTransitioning, setTabTransitioning] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [mobileInput, setMobileInput] = useState('');
 
-  useEffect(() => {
-    // Fetch all categories
-    axiosInstance.get('/api/categories')
-      .then(res => setCategories(res.data))
-      .catch(err => console.error('Failed to fetch categories:', err));
-  }, []);
-
-  useEffect(() => {
-    // If multiple services are selected, show all their treatments
+  // Memoized filtered treatments based on current selection
+  const treatments = useMemo(() => {
     if (selectedServices.length > 0) {
-      const fetchData = async () => {
-        try {
-          // Fetch all categories for tabs
-          const catRes = await axiosInstance.get('/api/categories');
-          setCategories(catRes.data);
-          // Fetch all treatments for selected services
-          const treatRes = await axiosInstance.get('/api/treatments');
-          const filteredTreatments = treatRes.data.filter(t => selectedServices.includes(String(t.category_id)));
-          setTreatments(filteredTreatments);
-        } catch (err) {
-          console.error('Error loading brochure data:', err);
-        } finally {
-          setLoading(false);
+      return allTreatments.filter(t => selectedServices.includes(String(t.category_id)));
+    }
+    if (selectedCategory) {
+      return allTreatments.filter(t => String(t.category_id) === selectedCategory);
+    }
+    return [];
+  }, [allTreatments, selectedServices, selectedCategory]);
+
+  // Group treatments by category for better organization
+  const treatmentsByCategory = useMemo(() => {
+    const grouped = {};
+    
+    if (selectedServices.length > 0) {
+      // Group treatments by their categories
+      selectedServices.forEach(serviceId => {
+        const category = categories.find(cat => String(cat.id) === serviceId);
+        const categoryTreatments = allTreatments.filter(t => String(t.category_id) === serviceId);
+        
+        if (category && categoryTreatments.length > 0) {
+          grouped[serviceId] = {
+            category,
+            treatments: categoryTreatments
+          };
         }
-      };
-      fetchData();
-      return;
+      });
+    } else if (selectedCategory) {
+      // Single category view
+      const category = categories.find(cat => String(cat.id) === selectedCategory);
+      const categoryTreatments = allTreatments.filter(t => String(t.category_id) === selectedCategory);
+      
+      if (category && categoryTreatments.length > 0) {
+        grouped[selectedCategory] = {
+          category,
+          treatments: categoryTreatments
+        };
+      }
     }
-    // Fallback: single category
-    if (!selectedCategory) {
-      navigate('/', { replace: true });
-      return;
-    }
-    const fetchData = async () => {
+    
+    return grouped;
+  }, [allTreatments, selectedServices, selectedCategory, categories]);
+
+  // Initial data fetch - load all data once
+  useEffect(() => {
+    const fetchInitialData = async () => {
       try {
         const [catRes, treatRes] = await Promise.all([
-          axiosInstance.get(`/api/categories/${selectedCategory}`),
-          axiosInstance.get(`/api/treatments?category_id=${selectedCategory}`)
+          axiosInstance.get('/api/categories'),
+          axiosInstance.get('/api/treatments')
         ]);
-        setCategory(catRes.data);
-        setTreatments(treatRes.data);
+        setCategories(catRes.data);
+        setAllTreatments(treatRes.data);
+        
+        // Set current category if single category is selected
+        if (selectedCategory && !selectedServices.length) {
+          const currentCat = catRes.data.find(cat => String(cat.id) === selectedCategory);
+          setCategory(currentCat);
+        }
       } catch (err) {
-        console.error('Error loading brochure data:', err);
+        console.error('Error loading initial data:', err);
       } finally {
-        setLoading(false);
+        setInitialLoading(false);
       }
     };
-    fetchData();
-  }, [selectedCategory, selectedServices, navigate]);
+
+    fetchInitialData();
+  }, []);
+
+  // Handle navigation without selected category or services
+  useEffect(() => {
+    if (!initialLoading && !selectedCategory && selectedServices.length === 0) {
+      navigate('/', { replace: true });
+    }
+  }, [selectedCategory, selectedServices, navigate, initialLoading]);
 
   const handleBookingClick = () => {
     if (!mobileInput) {
@@ -101,11 +160,29 @@ const BrochureDisplay = () => {
   };
 
   const goToCategory = (id) => {
-    navigate(`/brochure?category=${id}&lang=${selectedLanguage}`);
+    setTabTransitioning(true);
+    
+    // Small delay to show transition effect
+    setTimeout(() => {
+      navigate(`/brochure?category=${id}&lang=${selectedLanguage}`);
+      setTabTransitioning(false);
+    }, 150);
   };
 
   return (
     <div className={`min-h-screen bg-black text-white ${selectedLanguage === 'ar' ? 'rtl' : 'ltr'}`}>
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
       {/* Top Header */}
       <div className="bg-black py-4 px-6 border-b border-zinc-800 relative">
         <h1 className="text-2xl font-bold text-center text-white">
@@ -139,8 +216,10 @@ const BrochureDisplay = () => {
           <button
             key={cat.id}
             onClick={() => goToCategory(cat.id)}
-            className={`inline-block px-4 py-2 text-sm font-medium rounded-full mx-1 transition 
-              ${selectedServices.includes(String(cat.id)) ? 'bg-blue-600 text-white border-2 border-blue-400' : (String(cat.id) === selectedCategory ? 'bg-white text-black' : 'bg-zinc-800 text-white hover:bg-zinc-700')}`}
+            disabled={tabTransitioning}
+            className={`inline-block px-4 py-2 text-sm font-medium rounded-full mx-1 transition-all duration-300 transform hover:scale-105 
+              ${tabTransitioning ? 'opacity-60 cursor-not-allowed' : ''} 
+              ${selectedServices.includes(String(cat.id)) ? 'bg-blue-600 text-white border-2 border-blue-400 shadow-lg' : (String(cat.id) === selectedCategory ? 'bg-white text-black shadow-md' : 'bg-zinc-800 text-white hover:bg-zinc-700 hover:shadow-md')}`}
           >
             {selectedLanguage === 'ar' ? cat.name_ar : cat.name_en}
           </button>
@@ -150,68 +229,147 @@ const BrochureDisplay = () => {
       {/* Treatments Section */}
       <div className="container mx-auto p-6">
         {selectedServices.length === 0 && (
-          <h2 className="text-2xl font-semibold mb-4 capitalize">
+          <h2 className="text-2xl font-semibold mb-4 capitalize transition-opacity duration-300">
             {selectedLanguage === 'ar' ? category?.name_ar : category?.name_en}
           </h2>
         )}
-        {loading ? (
-          <p className="text-gray-400">Loading treatments...</p>
-        ) : treatments.length === 0 ? (
-          <p className="text-red-500">No treatments found.</p>
+        
+        {/* Loading state */}
+        {initialLoading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+          </div>
         ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {treatments.map((treatment) => (
-                <div
-                  key={treatment.id}
-                  className="bg-zinc-900 rounded-xl overflow-hidden shadow hover:bg-zinc-800 hover:scale-[1.01] transition-transform cursor-pointer border border-gray-800 relative"
-                  onClick={() => handleSelect(treatment.id)}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedTreatments.includes(treatment.id) || selectedTreatmentsQS.includes(String(treatment.id))}
-                    onChange={() => handleSelect(treatment.id)}
-                    className="absolute top-4 right-4 w-5 h-5 accent-blue-500 cursor-pointer z-10"
-                    onClick={e => e.stopPropagation()}
-                  />
-                  <img
-                    src={`${BASE_URL}${treatment.image_url}`}
-                    alt={treatment.name_en}
-                    className="w-full h-48 object-cover"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = '/default-treatment.jpg';
-                    }}
-                  />
-                  <div className="p-4">
-                    <h3 className="text-xl font-bold mb-2 text-white">
-                      {selectedLanguage === 'ar' ? treatment.name_ar : treatment.name_en}
-                    </h3>
-                    <p className="text-sm text-gray-300 mb-3">
-                      {selectedLanguage === 'ar' ? treatment.description_ar : treatment.description_en}
-                    </p>
-                    <ul className="space-y-2">
-                      {treatment.prices.map((price, idx) => (
-                        <li key={idx} className="flex justify-between border-b border-gray-700 pb-1">
-                          <span>{price.duration}</span>
-                          <span className="text-[#ababab]">{price.price} {selectedLanguage === 'ar' ? 'ريال' : 'QR'}</span>
-                        </li>
+          <div className={`transition-all duration-300 ${tabTransitioning ? 'opacity-60 scale-95' : 'opacity-100 scale-100'}`}>
+            {Object.keys(treatmentsByCategory).length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-red-500 text-lg">No treatments found.</p>
+              </div>
+            ) : (
+              <>
+                {/* Render treatments grouped by category */}
+                {Object.entries(treatmentsByCategory).map(([categoryId, { category, treatments }]) => (
+                  <div key={categoryId} className="mb-12">
+                    {/* Category Heading - Only show if multiple services selected */}
+                    {selectedServices.length > 1 && (
+                      <div className="mb-6">
+                        <h3 className="text-2xl font-bold text-white mb-2 border-b-2 border-blue-500 pb-2 inline-block">
+                          {selectedLanguage === 'ar' ? category.name_ar : category.name_en}
+                        </h3>
+                        <p className="text-gray-400 text-sm mt-1">
+                          {treatments.length} {selectedLanguage === 'ar' ? 'علاج متاح' : 'treatments available'}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Treatments Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {treatments.map((treatment, index) => (
+                        <div
+                          key={treatment.id}
+                          className="bg-zinc-900 rounded-xl overflow-hidden shadow hover:bg-zinc-800 hover:scale-[1.01] transition-all duration-300 cursor-pointer border border-gray-800 relative transform"
+                          style={{
+                            animationDelay: `${index * 50}ms`,
+                            animation: tabTransitioning ? 'none' : 'fadeInUp 0.6s ease-out forwards'
+                          }}
+                          onClick={() => handleSelect(treatment.id)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedTreatments.includes(treatment.id) || selectedTreatmentsQS.includes(String(treatment.id))}
+                            onChange={() => handleSelect(treatment.id)}
+                            className="absolute top-4 right-4 w-5 h-5 accent-blue-500 cursor-pointer z-10"
+                            onClick={e => e.stopPropagation()}
+                          />
+                          {treatment.media_type === 'video' || (treatment.media_url && treatment.media_url.match(/\.(mp4|webm|mov)$/i)) ? (
+                            <video
+                              src={`${BASE_URL}${treatment.media_url || treatment.image_url}`}
+                              className="w-full h-48 object-cover transition-transform duration-300"
+                              controls
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.poster = '/default-treatment.jpg';
+                              }}
+                            />
+                          ) : (
+                            <img
+                              src={`${BASE_URL}${treatment.media_url || treatment.image_url}`}
+                              alt={treatment.name_en}
+                              className="w-full h-48 object-cover transition-transform duration-300"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = '/default-treatment.jpg';
+                              }}
+                            />
+                          )}
+                          <div className="p-4">
+                            <h3 className="text-xl font-bold mb-2 text-white">
+                              {selectedLanguage === 'ar' ? treatment.name_ar : treatment.name_en}
+                            </h3>
+                            <p className="text-sm text-gray-300 mb-3">
+                              {selectedLanguage === 'ar' ? treatment.description_ar : treatment.description_en}
+                            </p>
+                            
+                            {/* Duration Selection */}
+                            <div className="mb-3">
+                              <h4 className="text-sm font-semibold text-gray-300 mb-2">
+                                {selectedLanguage === 'ar' ? 'اختر المدة:' : 'Select Duration:'}
+                              </h4>
+                              <div className="space-y-2">
+                                {treatment.prices.map((price, idx) => (
+                                  <div 
+                                    key={idx} 
+                                    className="flex items-center justify-between border-b border-gray-700 pb-2 hover:bg-gray-800 rounded px-2 py-1 transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDurationSelect(treatment.id, price.duration, price.price);
+                                    }}
+                                  >
+                                    <div className="flex items-center gap-2 flex-1">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedDurations[treatment.id]?.duration === price.duration}
+                                        onChange={() => handleDurationSelect(treatment.id, price.duration, price.price)}
+                                        className="w-4 h-4 accent-blue-500 cursor-pointer"
+                                        onClick={e => e.stopPropagation()}
+                                      />
+                                      <span className="text-sm text-white">{price.duration}</span>
+                                    </div>
+                                    <span className="text-sm text-[#ababab] font-medium">
+                                      {price.price} {selectedLanguage === 'ar' ? 'ريال' : 'QR'}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Selected duration indicator */}
+                            {selectedDurations[treatment.id] && (
+                              <div className="bg-blue-900/30 border border-blue-500/50 rounded p-2 mt-2">
+                                <span className="text-xs text-blue-300">
+                                  {selectedLanguage === 'ar' ? 'المدة المحددة: ' : 'Selected: '}
+                                  {selectedDurations[treatment.id].duration} - {selectedDurations[treatment.id].price} {selectedLanguage === 'ar' ? 'ريال' : 'QR'}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
+                ))}
+                <div className="flex justify-center mt-8">
+                  <button
+                    onClick={handleCheckout}
+                    className="bg-white text-black px-8 py-3 rounded-full shadow hover:bg-gray-100 text-lg font-semibold flex items-center gap-2 border border-gray-300 transition-all duration-300 hover:scale-105"
+                  >
+                    {selectedLanguage === 'ar' ? 'الدفع' : 'Checkout'}
+                    <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  </button>
                 </div>
-              ))}
-            </div>
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={handleCheckout}
-                className="bg-white text-black px-8 py-3 rounded-full shadow hover:bg-gray-100 text-lg font-semibold flex items-center gap-2 border border-gray-300"
-              >
-                {selectedLanguage === 'ar' ? 'الدفع' : 'Checkout'}
-                <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
-              </button>
-            </div>
-          </>
+              </>
+            )}
+          </div>
         )}
       </div>
 
