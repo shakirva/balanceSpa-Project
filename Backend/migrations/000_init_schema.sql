@@ -1,0 +1,101 @@
+-- ==========================================================
+-- 000_init_schema.sql
+-- Complete Initialization Database Schema for Balance Spa
+-- ==========================================================
+
+-- 1. Admins Table
+CREATE TABLE IF NOT EXISTS admins (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 2. Service Categories Table
+CREATE TABLE IF NOT EXISTS service_categories (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name_en VARCHAR(255) NOT NULL,
+  name_ar VARCHAR(255) DEFAULT NULL,
+  image_url VARCHAR(255) DEFAULT NULL,
+  `order` INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 3. Treatments Table
+CREATE TABLE IF NOT EXISTS treatments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name_en VARCHAR(255) NOT NULL,
+  name_ar VARCHAR(255) DEFAULT NULL,
+  category_id INT NOT NULL,
+  prices TEXT DEFAULT NULL,
+  image_url VARCHAR(255) DEFAULT NULL,
+  `order` INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (category_id) REFERENCES service_categories(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 4. Customers Table
+CREATE TABLE IF NOT EXISTS customers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  phone VARCHAR(30) NOT NULL,
+  email VARCHAR(100) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 5. Bookings Table
+CREATE TABLE IF NOT EXISTS bookings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) DEFAULT NULL,
+  date VARCHAR(50) DEFAULT NULL,
+  time VARCHAR(50) DEFAULT NULL,
+  nationality VARCHAR(100) DEFAULT NULL,
+  mobile VARCHAR(50) DEFAULT NULL,
+  knowFrom VARCHAR(255) DEFAULT NULL,
+  socialMedia VARCHAR(255) DEFAULT NULL,
+  healthConditions TEXT DEFAULT NULL,
+  implants VARCHAR(50) DEFAULT NULL,
+  implantDetails TEXT DEFAULT NULL,
+  pressure VARCHAR(50) DEFAULT NULL,
+  skinType VARCHAR(50) DEFAULT NULL,
+  otherConcerns TEXT DEFAULT NULL,
+  promotional TINYINT(1) DEFAULT 0,
+  selectedBodyParts TEXT DEFAULT NULL,
+  selectedService VARCHAR(255) DEFAULT NULL,
+  selectedTreatment VARCHAR(255) DEFAULT NULL,
+  selectedDuration VARCHAR(50) DEFAULT NULL,
+  selectedPrice VARCHAR(50) DEFAULT NULL,
+  signature LONGTEXT DEFAULT NULL,
+  pdfPath VARCHAR(255) DEFAULT NULL,
+  doctor_note TEXT DEFAULT NULL,
+  bookingImagePath VARCHAR(255) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 6. Note Logs Table
+CREATE TABLE IF NOT EXISTS note_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  booking_id INT NOT NULL,
+  notes TEXT NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 7. Food & Beverages Table
+CREATE TABLE IF NOT EXISTS food_beverages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  name_ar VARCHAR(255) DEFAULT NULL,
+  description TEXT DEFAULT NULL,
+  description_ar TEXT DEFAULT NULL,
+  image_url VARCHAR(255) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 8. Settings Table
+CREATE TABLE IF NOT EXISTS settings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  setting_key VARCHAR(100) NOT NULL UNIQUE,
+  setting_value TEXT DEFAULT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
