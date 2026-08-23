@@ -3,6 +3,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axiosInstance, { BASE_URL } from '../api/axios';
 import { getTranslations } from '../utils/translations';
 
+const getMediaUrl = (url) => {
+  if (!url) return '/default-treatment.jpg';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const base = BASE_URL || axiosInstance.defaults.baseURL || '';
+  const cleanPath = url.startsWith('/') ? url : `/${url}`;
+  return `${base}${cleanPath}`;
+};
+
 const BrochureDisplay = () => {
   // Multi-select treatments and checkout
   const [selectedTreatments, setSelectedTreatments] = useState([]);
@@ -264,51 +272,52 @@ const BrochureDisplay = () => {
 
                     {/* Treatments Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {treatments.map((treatment, index) => (
-                        <div
-                          key={treatment.id}
-                          className="bg-zinc-900 rounded-xl overflow-hidden shadow hover:bg-zinc-800 hover:scale-[1.01] transition-all duration-300 cursor-pointer border border-gray-800 relative transform"
-                          style={{
-                            animationDelay: `${index * 50}ms`,
-                            animation: tabTransitioning ? 'none' : 'fadeInUp 0.6s ease-out forwards'
-                          }}
-                          onClick={() => handleSelect(treatment.id)}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedTreatments.includes(treatment.id) || selectedTreatmentsQS.includes(String(treatment.id))}
-                            onChange={() => handleSelect(treatment.id)}
-                            className="absolute top-4 right-4 w-5 h-5 accent-blue-500 cursor-pointer z-10"
-                            onClick={e => e.stopPropagation()}
-                          />
-                          {treatment.media_type === 'video' || (treatment.media_url && treatment.media_url.match(/\.(mp4|webm|mov)$/i)) ? (
-                            <video
-                              src={`${BASE_URL}${treatment.media_url || treatment.image_url}`}
-                              className="w-full h-48 object-cover transition-transform duration-300"
-                              controls
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.poster = '/default-treatment.jpg';
-                              }}
+                      {treatments.map((treatment) => {
+                        const isSelected = selectedTreatments.includes(treatment.id) || selectedTreatmentsQS.includes(String(treatment.id));
+                        const mediaSrc = getMediaUrl(treatment.media_url || treatment.image_url);
+                        const isVideo = treatment.media_type === 'video' || (treatment.media_url && treatment.media_url.match(/\.(mp4|webm|mov)$/i));
+
+                        return (
+                          <div
+                            key={treatment.id}
+                            className={`bg-zinc-900 rounded-xl overflow-hidden shadow hover:bg-zinc-800 transition-all duration-300 cursor-pointer border relative ${isSelected ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-800'}`}
+                            onClick={() => handleSelect(treatment.id)}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleSelect(treatment.id)}
+                              className="absolute top-4 right-4 w-5 h-5 accent-blue-500 cursor-pointer z-10"
+                              onClick={e => e.stopPropagation()}
                             />
-                          ) : (
-                            <img
-                              src={`${BASE_URL}${treatment.media_url || treatment.image_url}`}
-                              alt={treatment.name_en}
-                              className="w-full h-48 object-cover transition-transform duration-300"
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = '/default-treatment.jpg';
-                              }}
-                            />
-                          )}
-                          <div className="p-4">
-                            <h3 className="text-xl font-bold mb-2 text-white">
-                              {selectedLanguage === 'ar' ? treatment.name_ar : treatment.name_en}
-                            </h3>
-                            <p className="text-sm text-gray-300 mb-3">
-                              {selectedLanguage === 'ar' ? treatment.description_ar : treatment.description_en}
-                            </p>
+                            {isVideo ? (
+                              <video
+                                src={mediaSrc}
+                                className="w-full h-48 object-cover transition-transform duration-300"
+                                controls
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.poster = '/default-treatment.jpg';
+                                }}
+                              />
+                            ) : (
+                              <img
+                                src={mediaSrc}
+                                alt={treatment.name_en}
+                                className="w-full h-48 object-cover transition-transform duration-300"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = '/default-treatment.jpg';
+                                }}
+                              />
+                            )}
+                            <div className="p-4">
+                              <h3 className="text-xl font-bold mb-2 text-white">
+                                {selectedLanguage === 'ar' ? treatment.name_ar : treatment.name_en}
+                              </h3>
+                              <p className="text-sm text-gray-300 mb-3">
+                                {selectedLanguage === 'ar' ? treatment.description_ar : treatment.description_en}
+                              </p>
                             
                             {/* Duration Selection */}
                             <div className="mb-3">
@@ -354,7 +363,8 @@ const BrochureDisplay = () => {
                             )}
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
