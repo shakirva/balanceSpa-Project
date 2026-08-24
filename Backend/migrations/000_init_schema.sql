@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS treatments (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name_en VARCHAR(255) NOT NULL,
   name_ar VARCHAR(255) DEFAULT NULL,
+  description_en TEXT DEFAULT NULL,
+  description_ar TEXT DEFAULT NULL,
   category_id INT NOT NULL,
   prices TEXT DEFAULT NULL,
   image_url VARCHAR(255) DEFAULT NULL,

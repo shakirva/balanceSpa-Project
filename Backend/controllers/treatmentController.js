@@ -37,7 +37,7 @@ export const getTreatments = async (req, res) => {
 // POST: Add new treatment
 export const addTreatment = async (req, res) => {
   try {
-    const { name_en, name_ar, category_id, prices, order = 0 } = req.body;
+    const { name_en, name_ar, description_en, description_ar, category_id, prices, order = 0 } = req.body;
     const image_url = req.file ? `/uploads/${req.file.filename}` : null;
 
     if (!name_en || !category_id) return res.status(400).json({ error: "Name and category are required" });
@@ -54,8 +54,8 @@ export const addTreatment = async (req, res) => {
       pricesValue = typeof prices === 'string' ? prices : JSON.stringify(prices);
     }
 
-    const query = "INSERT INTO treatments (name_en, name_ar, category_id, prices, image_url, `order`) VALUES (?, ?, ?, ?, ?, ?)";
-    const [result] = await pool.execute(query, [name_en, name_ar, category_id, pricesValue, image_url, order]);
+    const query = "INSERT INTO treatments (name_en, name_ar, description_en, description_ar, category_id, prices, image_url, `order`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    const [result] = await pool.execute(query, [name_en, name_ar, description_en || null, description_ar || null, category_id, pricesValue, image_url, order]);
 
     res.status(201).json({ message: "Treatment added", id: result.insertId, image_url });
   } catch (err) {
@@ -67,7 +67,7 @@ export const addTreatment = async (req, res) => {
 // PUT: Update treatment
 export const updateTreatment = async (req, res) => {
   try {
-    const { name_en, name_ar, prices, order } = req.body;
+    const { name_en, name_ar, description_en, description_ar, prices, order } = req.body;
     const { id } = req.params;
 
     let image_url = null;
@@ -85,10 +85,12 @@ export const updateTreatment = async (req, res) => {
     }
 
     const query = image_url
-      ? "UPDATE treatments SET name_en = ?, name_ar = ?, prices = ?, image_url = ?, `order` = ? WHERE id = ?"
-      : "UPDATE treatments SET name_en = ?, name_ar = ?, prices = ?, `order` = ? WHERE id = ?";
+      ? "UPDATE treatments SET name_en = ?, name_ar = ?, description_en = ?, description_ar = ?, prices = ?, image_url = ?, `order` = ? WHERE id = ?"
+      : "UPDATE treatments SET name_en = ?, name_ar = ?, description_en = ?, description_ar = ?, prices = ?, `order` = ? WHERE id = ?";
 
-    const values = image_url ? [name_en, name_ar, pricesValue, image_url, order, id] : [name_en, name_ar, pricesValue, order, id];
+    const values = image_url
+      ? [name_en, name_ar, description_en || null, description_ar || null, pricesValue, image_url, order, id]
+      : [name_en, name_ar, description_en || null, description_ar || null, pricesValue, order, id];
 
     await pool.execute(query, values);
     res.json({ message: "Treatment updated" });
