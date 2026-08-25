@@ -1,0 +1,4 @@
+Backend/.env
+Backend/public/pdf-assets/
+Backend/uploads/
+balance_db_backup_*.sql

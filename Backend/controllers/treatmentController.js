@@ -16,8 +16,11 @@ export const getTreatments = async (req, res) => {
     }
     query += " ORDER BY `order` ASC, id DESC";
     const [rows] = await pool.query(query, params);
-    // Ensure prices is always an array
+    // Ensure prices is always an array and normalize image_url path
     rows.forEach(row => {
+      if (row.image_url && row.image_url.startsWith('/uploads/')) {
+        row.image_url = row.image_url.replace('/uploads/', '/pdf-assets/');
+      }
       if (row.prices == null) row.prices = [];
       else if (typeof row.prices === 'string') {
         try {
@@ -38,7 +41,7 @@ export const getTreatments = async (req, res) => {
 export const addTreatment = async (req, res) => {
   try {
     const { name_en, name_ar, description_en, description_ar, category_id, prices, order = 0 } = req.body;
-    const image_url = req.file ? `/uploads/${req.file.filename}` : null;
+    const image_url = req.file ? `/pdf-assets/${req.file.filename}` : null;
 
     if (!name_en || !category_id) return res.status(400).json({ error: "Name and category are required" });
 
@@ -72,10 +75,10 @@ export const updateTreatment = async (req, res) => {
 
     let image_url = null;
     if (req.file) {
-      image_url = `/uploads/${req.file.filename}`;
+      image_url = `/pdf-assets/${req.file.filename}`;
       const [oldData] = await pool.query("SELECT image_url FROM treatments WHERE id = ?", [id]);
       const oldPath = oldData[0]?.image_url;
-      if (oldPath) fs.unlink(path.join("uploads", path.basename(oldPath)), () => {});
+      if (oldPath) fs.unlink(path.join("public/pdf-assets", path.basename(oldPath)), () => {});
     }
 
     // Parse prices if it's a string, else set to null
@@ -108,7 +111,7 @@ export const deleteTreatment = async (req, res) => {
     const oldPath = oldData[0]?.image_url;
 
     await pool.execute("DELETE FROM treatments WHERE id = ?", [id]);
-    if (oldPath) fs.unlink(path.join("uploads", path.basename(oldPath)), () => {});
+    if (oldPath) fs.unlink(path.join("public/pdf-assets", path.basename(oldPath)), () => {});
 
     res.json({ message: "Treatment deleted" });
   } catch (err) {

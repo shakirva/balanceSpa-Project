@@ -14,8 +14,7 @@ const app = express();
 
 // ✅ 1. CORS
 app.use(cors({
-  origin: 'http://localhost:3000',
-  
+  origin: ['https://balancespa.net', 'https://www.balancespa.net'],
   credentials: true,
 }));
 

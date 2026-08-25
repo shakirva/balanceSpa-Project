@@ -5,9 +5,13 @@ import { getTranslations } from '../utils/translations';
 
 const getMediaUrl = (url) => {
   if (!url) return '/default-treatment.jpg';
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  let cleanUrl = url;
+  if (cleanUrl.startsWith('/uploads/')) {
+    cleanUrl = cleanUrl.replace('/uploads/', '/pdf-assets/');
+  }
+  if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) return cleanUrl;
   const base = BASE_URL || axiosInstance.defaults.baseURL || '';
-  const cleanPath = url.startsWith('/') ? url : `/${url}`;
+  const cleanPath = cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
   return `${base}${cleanPath}`;
 };
 
@@ -296,7 +300,8 @@ const BrochureDisplay = () => {
                                 className="w-full h-48 object-cover transition-transform duration-300"
                                 controls
                                 onError={(e) => {
-                                  e.target.onerror = null;
+                                  if (e.target.dataset.failed) return;
+                                  e.target.dataset.failed = 'true';
                                   e.target.poster = '/default-treatment.jpg';
                                 }}
                               />
@@ -306,7 +311,8 @@ const BrochureDisplay = () => {
                                 alt={treatment.name_en}
                                 className="w-full h-48 object-cover transition-transform duration-300"
                                 onError={(e) => {
-                                  e.target.onerror = null;
+                                  if (e.target.dataset.failed) return;
+                                  e.target.dataset.failed = 'true';
                                   e.target.src = '/default-treatment.jpg';
                                 }}
                               />
