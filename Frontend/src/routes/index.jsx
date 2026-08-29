@@ -56,15 +56,14 @@ export default function Router() {
     { path: "*", element: <Navigate to="/404" replace /> },
   ],
 },
-  { path: "/", element: <ProtectedRoute><DisplayLanding /></ProtectedRoute> },
-   
+    { path: "/", element: <DisplayLanding /> },
+    { path: "/services", element: <Services /> },
     { path: "/menu", element: <Services /> },
-  { path: "/brochure", element: <BrochureDisplay /> },
-  { path: "/food-beverages", element: <FoodBeverages /> },
-  { path: "/booking", element: <BookingForm /> },
+    { path: "/brochure", element: <BrochureDisplay /> },
+    { path: "/food-beverages", element: <FoodBeverages /> },
+    { path: "/booking", element: <BookingForm /> },
     { path: "/pdf-preview", element: <PDFPreviewPage /> },
     { path: "/admin/login", element: <AdminLogin /> },
-  // Removed duplicate /food-admin route from outside MainLayout
     { path: "*", element: <Navigate to="/404" replace /> },
   ]);
 }
