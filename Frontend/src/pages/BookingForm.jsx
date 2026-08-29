@@ -78,8 +78,16 @@ const BookingForm = () => {
   }, []);
   // Removed duplicate declarations of query param variables
 
+const getTodayDateString = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const [formData, setFormData] = useState({
-    date: '',
+    date: getTodayDateString(),
     name: '',
     time: '',
     nationality: '',
@@ -480,13 +488,15 @@ const handleClearSignature = () => {
                               </span>
                               <button
                                 type="button"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setFormData(prev => ({
                                     ...prev,
-                                    selectedServices: prev.selectedServices.filter(id => id !== serviceId)
+                                    selectedServices: (prev.selectedServices || []).filter(id => String(id) !== String(serviceId))
                                   }));
                                 }}
-                                className="text-red-400 hover:text-red-300 text-sm"
+                                className="text-red-400 hover:text-red-300 text-base font-bold px-2 py-1 cursor-pointer transition-colors"
+                                title={selectedLanguage === 'ar' ? 'إزالة' : 'Remove'}
                               >
                                 ✕
                               </button>
@@ -594,16 +604,22 @@ const handleClearSignature = () => {
                                 </div>
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    setFormData(prev => ({
-                                      ...prev,
-                                      selectedTreatments: prev.selectedTreatments.filter(id => id !== treatId),
-                                      selectedDurations: Object.fromEntries(
-                                        Object.entries(prev.selectedDurations).filter(([id]) => id !== treatId)
-                                      )
-                                    }));
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setFormData(prev => {
+                                      const updatedTreatments = (prev.selectedTreatments || []).filter(id => String(id) !== String(treatId));
+                                      const updatedDurations = { ...prev.selectedDurations };
+                                      delete updatedDurations[treatId];
+                                      delete updatedDurations[String(treatId)];
+                                      return {
+                                        ...prev,
+                                        selectedTreatments: updatedTreatments,
+                                        selectedDurations: updatedDurations
+                                      };
+                                    });
                                   }}
-                                  className="text-red-400 hover:text-red-300 text-sm ml-2"
+                                  className="text-red-400 hover:text-red-300 text-base font-bold px-2 py-1 cursor-pointer transition-colors ml-2"
+                                  title={selectedLanguage === 'ar' ? 'إزالة' : 'Remove'}
                                 >
                                   ✕
                                 </button>
@@ -698,13 +714,15 @@ const handleClearSignature = () => {
                               </span>
                               <button
                                 type="button"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setFormData(prev => ({
                                     ...prev,
-                                    selectedFoods: prev.selectedFoods.filter(id => id !== foodId)
+                                    selectedFoods: (prev.selectedFoods || []).filter(id => String(id) !== String(foodId))
                                   }));
                                 }}
-                                className="text-red-400 hover:text-red-300 text-sm"
+                                className="text-red-400 hover:text-red-300 text-base font-bold px-2 py-1 cursor-pointer transition-colors"
+                                title={selectedLanguage === 'ar' ? 'إزالة' : 'Remove'}
                               >
                                 ✕
                               </button>
@@ -765,21 +783,8 @@ const handleClearSignature = () => {
 
                     <div>
                       <label className="block font-semibold mb-2">{translations.labels.date}</label>
-                      <div
-                        className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white cursor-pointer"
-                        onClick={() => dateInputRef.current && dateInputRef.current.showPicker && dateInputRef.current.showPicker()}
-                        style={{ position: 'relative' }}
-                      >
-                        <input
-                          type="date"
-                          name="date"
-                          ref={dateInputRef}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          onChange={handleChange}
-                        />
-                        <span className="pointer-events-none select-none">
-                          {formData.date || (selectedLanguage === 'ar' ? 'اختر التاريخ' : 'Select date')}
-                        </span>
+                      <div className="w-full bg-zinc-800/80 border border-zinc-700 p-3 rounded-lg text-white font-medium select-none cursor-not-allowed">
+                        {formData.date}
                       </div>
                     </div>
 
