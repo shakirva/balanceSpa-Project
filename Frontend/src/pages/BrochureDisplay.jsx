@@ -2,18 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axiosInstance, { BASE_URL } from '../api/axios';
 import { getTranslations } from '../utils/translations';
-
-const getMediaUrl = (url) => {
-  if (!url) return '/default-treatment.jpg';
-  let cleanUrl = url;
-  if (cleanUrl.startsWith('/uploads/')) {
-    cleanUrl = cleanUrl.replace('/uploads/', '/pdf-assets/');
-  }
-  if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) return cleanUrl;
-  const base = BASE_URL || axiosInstance.defaults.baseURL || '';
-  const cleanPath = cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
-  return `${base}${cleanPath}`;
-};
+import { getMediaUrl } from '../utils/media';
 
 const BrochureDisplay = () => {
   // Multi-select treatments and checkout

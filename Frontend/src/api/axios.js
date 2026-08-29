@@ -1,7 +1,8 @@
 // 📁 frontend/api/axios.js
 import axios from "axios";
+import { BASE_URL } from "../config";
 
-export const BASE_URL = "http://localhost:5000";
+export { BASE_URL };
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,

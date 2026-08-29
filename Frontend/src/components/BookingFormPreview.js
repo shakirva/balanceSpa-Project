@@ -1,5 +1,7 @@
 import React, { useRef } from "react";
 import html2canvas from "html2canvas";
+import axiosInstance from "../api/axios";
+import { getMediaUrl } from "../utils/media";
 
 const BookingFormPreview = ({ bookingData, bookingId }) => {
   const previewRef = useRef(null);
@@ -7,10 +9,9 @@ const BookingFormPreview = ({ bookingData, bookingId }) => {
   const handleSaveImage = async () => {
     const canvas = await html2canvas(previewRef.current);
     const imageData = canvas.toDataURL("image/png");
-    await fetch("http://localhost:5000/api/bookings/booking-image", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: imageData, bookingId }),
+    await axiosInstance.post("/api/bookings/booking-image", {
+      image: imageData,
+      bookingId,
     });
     alert("Booking image saved!");
   };
@@ -27,11 +28,13 @@ const BookingFormPreview = ({ bookingData, bookingId }) => {
         {/* ...body marks, etc... */}
       </div>
       <button onClick={handleSaveImage}>Save as Image</button>
-      <img
-        src={`http://localhost:5000/uploads/${bookingData.bookingImagePath}`}
-        alt="Booking Output"
-        style={{ width: 300 }}
-      />
+      {bookingData.bookingImagePath && (
+        <img
+          src={getMediaUrl(bookingData.bookingImagePath)}
+          alt="Booking Output"
+          style={{ width: 300 }}
+        />
+      )}
     </div>
   );
 };

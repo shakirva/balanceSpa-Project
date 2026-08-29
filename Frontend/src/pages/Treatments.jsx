@@ -19,6 +19,7 @@ import {
 } from "@ant-design/icons";
 import axios from "../api/axios";
 import { useLocation } from "react-router-dom";
+import { getMediaUrl } from "../utils/media";
 
 const { Option } = Select;
 
@@ -213,8 +214,7 @@ export default function Treatments() {
             dataIndex: "image_url",
             render: (img) => {
               if (!img) return <div className="w-16 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-400">?</div>;
-              const cleanPath = img.replace('/uploads/', '/pdf-assets/');
-              const fullSrc = cleanPath.startsWith('http') ? cleanPath : `https://balancespa.net${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
+              const fullSrc = getMediaUrl(img);
               return (
                 <img
                   src={fullSrc}
@@ -344,7 +344,7 @@ export default function Treatments() {
                 <img
                   src={
                     typeof treatmentMedia === "string"
-                      ? (treatmentMedia.startsWith('http') ? treatmentMedia : `https://balancespa.net${treatmentMedia.replace('/uploads/', '/pdf-assets/')}`)
+                      ? getMediaUrl(treatmentMedia)
                       : URL.createObjectURL(treatmentMedia)
                   }
                   alt="Preview"
@@ -354,7 +354,7 @@ export default function Treatments() {
                 <video
                   src={
                     typeof treatmentMedia === "string"
-                      ? (treatmentMedia.startsWith('http') ? treatmentMedia : `https://balancespa.net${treatmentMedia.replace('/uploads/', '/pdf-assets/')}`)
+                      ? getMediaUrl(treatmentMedia)
                       : URL.createObjectURL(treatmentMedia)
                   }
                   className="mt-2 w-24 h-16 object-cover rounded border"

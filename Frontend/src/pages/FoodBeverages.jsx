@@ -4,6 +4,7 @@ import { getTranslations } from "../utils/translations";
 import { Button, Input, Modal, Upload, message, Table, Popconfirm, Form } from "antd";
 import { PlusOutlined, UploadOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import axios from "../api/axios";
+import { getMediaUrl } from "../utils/media";
 
 const FoodBeverages = () => {
   const location = useLocation();
@@ -45,7 +46,7 @@ const FoodBeverages = () => {
       setForm({
         name: item.name,
         description: item.description,
-        image: item.image_url ? axios.defaults.baseURL + item.image_url : null,
+        image: getMediaUrl(item.image_url, null),
         imageFile: null,
       });
     } else {
@@ -118,7 +119,7 @@ const FoodBeverages = () => {
       render: (image_url) =>
         image_url ? (
           <img
-            src={axios.defaults.baseURL + image_url}
+            src={getMediaUrl(image_url)}
             alt="Food"
             className="h-12 w-12 object-cover rounded-full border"
           />
@@ -193,7 +194,7 @@ const FoodBeverages = () => {
           items.map((item) => (
             <div key={item.id} className="bg-white text-black rounded-2xl shadow-xl p-6 w-full max-w-xs flex flex-col items-center transition-transform hover:scale-105">
               <img
-                src={item.image_url ? axios.defaults.baseURL + item.image_url : 'https://via.placeholder.com/100x100?text=No+Image'}
+                src={getMediaUrl(item.image_url, 'https://via.placeholder.com/100x100?text=No+Image')}
                 alt={lang === 'ar' ? item.name_ar : item.name}
                 className="h-24 w-24 object-cover rounded-full border-2 border-gray-300 mb-4 shadow"
               />

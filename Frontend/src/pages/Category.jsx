@@ -15,6 +15,7 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons";
 import axios from "../api/axios"; // ✅ use our axios instance
+import { getMediaUrl } from "../utils/media";
 
 const ServiceCategory = () => {
   const [categories, setCategories] = useState([]);
@@ -49,7 +50,7 @@ const ServiceCategory = () => {
       setForm({
         name_en: cat.name_en,
         name_ar: cat.name_ar,
-        image: cat.image_url ? axios.defaults.baseURL + cat.image_url : null,
+        image: getMediaUrl(cat.image_url, null),
         imageFile: null,
         order: cat.order || 0, // Set order value
       });
@@ -132,7 +133,7 @@ const ServiceCategory = () => {
           );
         }
         // Try to detect if it's a video by extension
-        const url = axios.defaults.baseURL + image_url;
+        const url = getMediaUrl(image_url);
         const isVideo = /\.(mp4|webm|ogg)$/i.test(url);
         if (isVideo) {
           return (

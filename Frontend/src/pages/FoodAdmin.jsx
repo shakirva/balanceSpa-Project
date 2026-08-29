@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Button, Input, Modal, Upload, message, Table, Popconfirm, Form } from "antd";
 import { PlusOutlined, UploadOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import axios from "../api/axios";
+import { getMediaUrl } from "../utils/media";
 
 const FoodAdmin = () => {
   const [items, setItems] = useState([]);
@@ -31,7 +32,7 @@ const FoodAdmin = () => {
         name_ar: item.name_ar || "",
         description: item.description,
         description_ar: item.description_ar || "",
-        image: item.image_url ? axios.defaults.baseURL + item.image_url : null,
+        image: getMediaUrl(item.image_url, null),
         imageFile: null,
       });
     } else {
@@ -100,7 +101,7 @@ const FoodAdmin = () => {
       render: (image_url) =>
         image_url ? (
           <img
-            src={axios.defaults.baseURL + image_url}
+            src={getMediaUrl(image_url)}
             alt="Food"
             className="h-12 w-12 object-cover rounded-full border"
           />

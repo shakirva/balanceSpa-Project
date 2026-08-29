@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../api/axios"; // ✅ use centralized axios instance
+import { getMediaUrl } from "../utils/media";
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -140,7 +141,7 @@ const Appointments = () => {
                     <td style={tdStyle}>
                       {pdfPath ? (
                         <a
-                          href={`${axiosInstance.defaults.baseURL}${pdfPath}`}
+                          href={getMediaUrl(pdfPath)}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
