@@ -143,7 +143,7 @@ const Services = () => {
                       {category.media_type === 'video' || (category.media_url && category.media_url.match(/\.(mp4|webm|mov)$/i)) ? (
                         <>
                           <video
-                            src={getMediaUrl(category.media_url || category.image_url)}
+                            src={category.media_url ? axios.defaults.baseURL + category.media_url : (category.image_url ? axios.defaults.baseURL + category.image_url : '')}
                             className="w-full h-full object-cover"
                             controls
                             onError={e => { e.target.onerror = null; e.target.poster = '/default-treatment.jpg'; }}
@@ -160,7 +160,7 @@ const Services = () => {
                         </>
                       ) : (
                         <img
-                          src={getMediaUrl(category.media_url || category.image_url)}
+                          src={category.media_url ? axios.defaults.baseURL + category.media_url : (category.image_url ? axios.defaults.baseURL + category.image_url : '')}
                           alt={category.name_en}
                           className="w-full h-full object-cover"
                           onError={e => { e.target.onerror = null; e.target.src = '/default-treatment.jpg'; }}
