@@ -74,7 +74,10 @@ const Services = () => {
   };
 
   return (
-  <div className={`min-h-screen bg-black text-white ${selectedLanguage === 'ar' ? 'rtl' : 'ltr'}`}> 
+    <div
+      className={`min-h-screen bg-black text-white ${selectedLanguage === 'ar' ? 'rtl' : 'ltr'}`}
+      dir={selectedLanguage === 'ar' ? 'rtl' : 'ltr'}
+    > 
       {/* Header */}
       <div className="py-4 px-6 border-b border-zinc-800 relative">
         <h1 className="text-2xl font-bold text-center mb-2">
@@ -87,7 +90,14 @@ const Services = () => {
         {/* Back Button */}
         <div className={`absolute top-8 ${selectedLanguage === 'ar' ? 'right-8' : 'left-8'}`}>
           <button onClick={() => navigate(-1)} className="text-white hover:text-blue-400 flex gap-1 items-center">
-            <svg width="24" height="24" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg
+              width="24"
+              height="24"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              className={selectedLanguage === 'ar' ? 'rotate-180' : ''}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
             <span>{selectedLanguage === 'ar' ? 'الرجوع' : 'Back'}</span>
@@ -99,7 +109,7 @@ const Services = () => {
           <div className="flex gap-2">
             <button
               onClick={() => navigate(`/booking?lang=${selectedLanguage}`)}
-              className="bg-white text-black px-6 py-3 rounded-full shadow hover:bg-blue-700"
+              className="bg-white text-black px-6 py-3 rounded-full shadow hover:bg-blue-700 hover:text-white transition-colors"
             >
               {selectedLanguage === 'ar' ? 'تسجيل الآن' : 'Register Now'}
             </button>
@@ -113,13 +123,18 @@ const Services = () => {
           <p className="text-center text-gray-400">Loading services...</p>
         ) : (
           <div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 overflow-y-auto max-h-[calc(100vh-280px)] pr-2 hide-scrollbar">
+            <div
+              className="grid grid-cols-1 sm:grid-cols-3 gap-5 overflow-y-auto max-h-[calc(100vh-280px)] px-2 hide-scrollbar"
+              dir={selectedLanguage === 'ar' ? 'rtl' : 'ltr'}
+            >
               {categories
                 .sort((a, b) => (a.order || 0) - (b.order || 0))
                 .map((category) => (
                   <div
                     key={category.id}
-                    className={`bg-zinc-900 rounded-xl p-3 text-left transition hover:bg-zinc-800 relative ${selectedServices.includes(category.id) ? 'ring-2 ring-blue-500' : ''}`}
+                    className={`bg-zinc-900 rounded-xl p-3 transition hover:bg-zinc-800 relative ${
+                      selectedLanguage === 'ar' ? 'text-right' : 'text-left'
+                    } ${selectedServices.includes(category.id) ? 'ring-2 ring-blue-500' : ''}`}
                     style={{ cursor: "pointer" }}
                     onClick={() => handleServiceSelect(category.id)}
                   >
@@ -151,14 +166,23 @@ const Services = () => {
                         />
                       )}
                     </div>
-                    <h3 className="text-lg font-semibold">
+                    <h3
+                      className={`text-lg font-semibold transition-colors ${
+                        selectedLanguage === 'ar'
+                          ? 'text-right text-xl font-bold leading-snug tracking-wide'
+                          : 'text-left'
+                      }`}
+                      style={{
+                        fontFamily: selectedLanguage === 'ar' ? "'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif" : undefined
+                      }}
+                    >
                       {selectedLanguage === 'ar' ? category.name_ar : category.name_en}
                     </h3>
                     <input
                       type="checkbox"
                       checked={selectedServices.includes(category.id)}
                       onChange={() => handleServiceSelect(category.id)}
-                      className="absolute top-4 right-4 w-5 h-5 accent-blue-500 cursor-pointer"
+                      className={`absolute top-4 ${selectedLanguage === 'ar' ? 'left-4' : 'right-4'} w-5 h-5 accent-blue-500 cursor-pointer z-10`}
                       onClick={e => e.stopPropagation()}
                     />
                   </div>
@@ -170,7 +194,17 @@ const Services = () => {
                 className="bg-white text-black px-8 py-3 rounded-full shadow hover:bg-gray-100 text-lg font-semibold flex items-center gap-2 border border-gray-300"
               >
                 {selectedLanguage === 'ar' ? 'عرض العلاجات' : 'Show Treatments'}
-                <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+                <svg
+                  width="22"
+                  height="22"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  className={selectedLanguage === 'ar' ? 'rotate-180' : ''}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
               </button>
             </div>
           </div>

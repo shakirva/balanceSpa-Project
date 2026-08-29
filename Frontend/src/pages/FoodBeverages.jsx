@@ -33,7 +33,7 @@ const FoodBeverages = () => {
   const fetchItems = async () => {
     try {
       const res = await axios.get("/api/food-beverages");
-  setItems(Array.isArray(res.data) ? res.data : []);
+      setItems(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       message.error("Failed to load items");
     }
@@ -172,8 +172,8 @@ const FoodBeverages = () => {
       <div className="w-full max-w-6xl relative mb-8">
         {/* Back Button */}
         <div className={`absolute top-0 ${lang === 'ar' ? 'right-0' : 'left-0'}`}>
-          <button 
-            onClick={() => navigate(-1)} 
+          <button
+            onClick={() => navigate(-1)}
             className="text-white hover:text-blue-400 flex items-center gap-2 text-lg font-medium transition-colors duration-300"
           >
             <svg width="24" height="24" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -182,9 +182,9 @@ const FoodBeverages = () => {
             <span>{lang === 'ar' ? 'الرجوع' : 'Back'}</span>
           </button>
         </div>
-        
+
         {/* Title */}
-        <h2 className="text-3xl font-bold text-center tracking-wide">{lang === 'ar' ? 'الأطعمة والمشروبات' : 'Food & Beverages'}</h2>
+        <h2 className="text-3xl font-bold text-center tracking-wide">{lang === 'ar' ? 'الزيوت والأطعمة والمشروبات' : 'Oils & Food Beverages'}</h2>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10 justify-items-center w-full max-w-6xl">
         {items.length === 0 ? (

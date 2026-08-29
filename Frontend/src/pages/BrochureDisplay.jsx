@@ -21,21 +21,53 @@ const BrochureDisplay = () => {
   // Duration selections - format: { treatmentId: { duration: price } }
   const [selectedDurations, setSelectedDurations] = useState({});
 
-  const handleSelect = (id) => {
-    setSelectedTreatments(prev =>
-      prev.includes(id)
-        ? prev.filter(tid => tid !== id)
-        : [...prev, id]
-    );
+  const handleSelect = (treatment) => {
+    const id = typeof treatment === 'object' ? treatment.id : treatment;
+    const treatmentObj = typeof treatment === 'object' ? treatment : allTreatments.find(t => String(t.id) === String(id));
+
+    setSelectedTreatments(prev => {
+      if (prev.includes(id)) {
+        // Deselect treatment and clear duration
+        setSelectedDurations(prevDur => {
+          const updated = { ...prevDur };
+          delete updated[id];
+          return updated;
+        });
+        return prev.filter(tid => tid !== id);
+      } else {
+        // Select treatment and auto-pick 1st duration if available
+        if (treatmentObj && treatmentObj.prices && treatmentObj.prices.length > 0) {
+          const firstPrice = treatmentObj.prices[0];
+          setSelectedDurations(prevDur => ({
+            ...prevDur,
+            [id]: { duration: firstPrice.duration, price: firstPrice.price }
+          }));
+        }
+        return [...prev, id];
+      }
+    });
   };
 
   const handleDurationSelect = (treatmentId, duration, price) => {
-    setSelectedDurations(prev => ({
-      ...prev,
-      [treatmentId]: prev[treatmentId]?.duration === duration 
-        ? undefined // Unselect if clicking the same duration
-        : { duration, price }
-    }));
+    setSelectedDurations(prev => {
+      const isCurrentlySelected = prev[treatmentId]?.duration === duration;
+      if (isCurrentlySelected) {
+        // Deselect duration and remove treatment from selectedTreatments
+        setSelectedTreatments(prevTreatments => prevTreatments.filter(tid => tid !== treatmentId));
+        const updated = { ...prev };
+        delete updated[treatmentId];
+        return updated;
+      } else {
+        // Select duration and ensure treatment is in selectedTreatments
+        setSelectedTreatments(prevTreatments => 
+          prevTreatments.includes(treatmentId) ? prevTreatments : [...prevTreatments, treatmentId]
+        );
+        return {
+          ...prev,
+          [treatmentId]: { duration, price }
+        };
+      }
+    });
   };
 
   const handleCheckout = () => {
@@ -285,15 +317,8 @@ const BrochureDisplay = () => {
                           <div
                             key={treatment.id}
                             className={`bg-zinc-900 rounded-xl overflow-hidden shadow hover:bg-zinc-800 transition-all duration-300 cursor-pointer border relative ${isSelected ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-800'}`}
-                            onClick={() => handleSelect(treatment.id)}
+                            onClick={() => handleSelect(treatment)}
                           >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => handleSelect(treatment.id)}
-                              className="absolute top-4 right-4 w-5 h-5 accent-blue-500 cursor-pointer z-10"
-                              onClick={e => e.stopPropagation()}
-                            />
                             {isVideo ? (
                               <video
                                 src={mediaSrc}

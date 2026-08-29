@@ -111,6 +111,18 @@ const [formData, setFormData] = useState({
   }, []);
 
 
+  const calculateTreatmentsTotal = () => {
+    if (!formData.selectedTreatments || formData.selectedTreatments.length === 0) return 0;
+    return formData.selectedTreatments.reduce((sum, treatId) => {
+      const durationInfo = formData.selectedDurations?.[treatId];
+      if (durationInfo && durationInfo.price) {
+        const numericPrice = parseFloat(String(durationInfo.price).replace(/[^0-9.]/g, '')) || 0;
+        return sum + numericPrice;
+      }
+      return sum;
+    }, 0);
+  };
+
   const [categories, setCategories] = useState([]);
   const [treatments, setTreatments] = useState([]);
 const [isModalOpen, setIsModalOpen] = useState(false);
@@ -599,6 +611,17 @@ const handleClearSignature = () => {
                             </div>
                           );
                         })}
+
+                        {/* Total Amount Summary */}
+                        <div className="mt-3 p-3 bg-zinc-800/90 border border-blue-500/60 rounded-lg flex justify-between items-center shadow">
+                          <span className="text-white font-semibold text-sm">
+                            {selectedLanguage === 'ar' ? 'المبلغ الإجمالي:' : 'Total Amount:'}
+                          </span>
+                          <span className="text-blue-400 font-bold text-base">
+                            {calculateTreatmentsTotal()} {selectedLanguage === 'ar' ? 'ريال' : 'QR'}
+                          </span>
+                        </div>
+
                         <button
                           type="button"
                           onClick={() => setShowTreatmentDropdown(!showTreatmentDropdown)}
