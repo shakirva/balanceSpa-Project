@@ -498,10 +498,27 @@ const handleClearSignature = () => {
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    selectedServices: (prev.selectedServices || []).filter(id => String(id) !== String(serviceId))
-                                  }));
+                                  setFormData(prev => {
+                                    const updatedServices = (prev.selectedServices || []).filter(id => String(id) !== String(serviceId));
+                                    const updatedTreatments = (prev.selectedTreatments || []).filter(treatId => {
+                                      const t = treatments.find(item => String(item.id) === String(treatId));
+                                      return !t || String(t.category_id) !== String(serviceId);
+                                    });
+                                    const updatedDurations = { ...prev.selectedDurations };
+                                    (prev.selectedTreatments || []).forEach(treatId => {
+                                      const t = treatments.find(item => String(item.id) === String(treatId));
+                                      if (t && String(t.category_id) === String(serviceId)) {
+                                        delete updatedDurations[treatId];
+                                        delete updatedDurations[String(treatId)];
+                                      }
+                                    });
+                                    return {
+                                      ...prev,
+                                      selectedServices: updatedServices,
+                                      selectedTreatments: updatedTreatments,
+                                      selectedDurations: updatedDurations
+                                    };
+                                  });
                                 }}
                                 className="text-red-400 hover:text-red-300 text-base font-bold px-2 py-1 cursor-pointer transition-colors"
                                 title={selectedLanguage === 'ar' ? 'إزالة' : 'Remove'}
@@ -619,10 +636,28 @@ const handleClearSignature = () => {
                                       const updatedDurations = { ...prev.selectedDurations };
                                       delete updatedDurations[treatId];
                                       delete updatedDurations[String(treatId)];
+
+                                      // Auto-remove parent service if no selected treatments remain for it
+                                      const targetTreatment = treatments.find(t => String(t.id) === String(treatId));
+                                      let updatedServices = prev.selectedServices || [];
+
+                                      if (targetTreatment && targetTreatment.category_id) {
+                                        const catIdStr = String(targetTreatment.category_id);
+                                        const hasRemainingTreatmentsForService = updatedTreatments.some(id => {
+                                          const t = treatments.find(item => String(item.id) === String(id));
+                                          return t && String(t.category_id) === catIdStr;
+                                        });
+
+                                        if (!hasRemainingTreatmentsForService) {
+                                          updatedServices = updatedServices.filter(sId => String(sId) !== catIdStr);
+                                        }
+                                      }
+
                                       return {
                                         ...prev,
                                         selectedTreatments: updatedTreatments,
-                                        selectedDurations: updatedDurations
+                                        selectedDurations: updatedDurations,
+                                        selectedServices: updatedServices
                                       };
                                     });
                                   }}
