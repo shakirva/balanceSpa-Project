@@ -151,10 +151,19 @@ const [showFoodDropdown, setShowFoodDropdown] = useState(false);
       .catch(err => console.error('Failed to fetch services:', err));
   }, []);
 
-  // Set selectedService in formData after categories are loaded
+  // Refs to ensure URL query params sync ONLY ONCE on initial load and never override user deletions
+  const initialServicesSyncedRef = useRef(false);
+  const initialTreatmentsSyncedRef = useRef(false);
+  const initialServicesDerivedRef = useRef(false);
+
+  // Set selectedService in formData ONCE after categories are loaded
   useEffect(() => {
-    if (categories.length > 0 && selectedServicesArr.length > 0) {
-      setFormData(prev => ({ ...prev, selectedServices: selectedServicesArr }));
+    if (!initialServicesSyncedRef.current && categories.length > 0 && selectedServicesArr.length > 0) {
+      initialServicesSyncedRef.current = true;
+      setFormData(prev => ({
+        ...prev,
+        selectedServices: prev.selectedServices.length > 0 ? prev.selectedServices : selectedServicesArr
+      }));
     }
   }, [categories, selectedServicesArr]);
 
@@ -185,26 +194,25 @@ const [showFoodDropdown, setShowFoodDropdown] = useState(false);
     }
   }, [formData.selectedServices]);
 
-  // Set selectedTreatment in formData only once after treatments are loaded, and only if value changes
+  // Set selectedTreatment in formData ONCE after initial treatments are loaded
   useEffect(() => {
-    if (treatments.length > 0 && selectedTreatmentsArr.length > 0) {
+    if (!initialTreatmentsSyncedRef.current && treatments.length > 0 && selectedTreatmentsArr.length > 0) {
+      initialTreatmentsSyncedRef.current = true;
       const validTreatments = selectedTreatmentsArr.filter(tid => treatments.some(t => String(t.id) === String(tid)));
-      setFormData(prev => {
-        // Only update if value actually changes
-        if (JSON.stringify(prev.selectedTreatments) !== JSON.stringify(validTreatments)) {
-          return { ...prev, selectedTreatments: validTreatments };
-        }
-        return prev;
-      });
+      if (validTreatments.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          selectedTreatments: [...new Set([...prev.selectedTreatments, ...validTreatments])]
+        }));
+      }
     }
   }, [treatments, selectedTreatmentsArr]);
 
-  // Auto-derive services from treatments when treatments exist but no explicit services
+  // Auto-derive services from treatments ONCE when treatments exist but no explicit services
   useEffect(() => {
-    if (selectedTreatmentsArr.length > 0 && categories.length > 0) {
-      // If no services explicitly selected, derive them from treatments
+    if (!initialServicesDerivedRef.current && selectedTreatmentsArr.length > 0 && categories.length > 0) {
+      initialServicesDerivedRef.current = true;
       if (!selectedServicesArr || selectedServicesArr.length === 0) {
-        // Fetch all treatments to find category relationships
         axios.get('/api/treatments')
           .then(res => {
             const allTreatments = Array.isArray(res.data) ? res.data : [];
