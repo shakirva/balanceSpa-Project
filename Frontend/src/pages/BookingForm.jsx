@@ -131,6 +131,59 @@ const [formData, setFormData] = useState({
     }, 0);
   };
 
+  const parseDurationToMinutes = (durationStr) => {
+    if (!durationStr) return 0;
+    const str = String(durationStr).trim().toLowerCase();
+    
+    if (str.includes('hr') || str.includes('hour')) {
+      const match = str.match(/([0-9.]+)/);
+      if (match) {
+        return Math.round(parseFloat(match[1]) * 60);
+      }
+    }
+    
+    const match = str.match(/([0-9.]+)/);
+    if (match) {
+      return parseFloat(match[1]);
+    }
+    
+    return 0;
+  };
+
+  const calculateTreatmentsTotalDuration = () => {
+    if (!formData.selectedTreatments || formData.selectedTreatments.length === 0) return { totalMinutes: 0, formatted: '' };
+    
+    const totalMinutes = formData.selectedTreatments.reduce((sum, treatId) => {
+      const durationInfo = formData.selectedDurations?.[treatId];
+      if (durationInfo && durationInfo.duration) {
+        return sum + parseDurationToMinutes(durationInfo.duration);
+      }
+      return sum;
+    }, 0);
+
+    if (totalMinutes <= 0) return { totalMinutes: 0, formatted: '' };
+
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+
+    let formatted = '';
+    if (hours > 0 && mins > 0) {
+      formatted = selectedLanguage === 'ar' 
+        ? `${hours} ${hours > 10 ? 'ساعة' : hours === 1 ? 'ساعة' : 'ساعات'} و ${mins} دقيقة` 
+        : `${hours} hr${hours > 1 ? 's' : ''} ${mins} mins`;
+    } else if (hours > 0) {
+      formatted = selectedLanguage === 'ar' 
+        ? `${hours} ${hours === 1 ? 'ساعة' : hours > 10 ? 'ساعة' : 'ساعات'}` 
+        : `${hours} hr${hours > 1 ? 's' : ''}`;
+    } else {
+      formatted = selectedLanguage === 'ar' 
+        ? `${mins} دقيقة` 
+        : `${mins} mins`;
+    }
+
+    return { totalMinutes, formatted };
+  };
+
   const [categories, setCategories] = useState([]);
   const [treatments, setTreatments] = useState([]);
 const [isModalOpen, setIsModalOpen] = useState(false);
@@ -671,14 +724,26 @@ const handleClearSignature = () => {
                           );
                         })}
 
-                        {/* Total Amount Summary */}
-                        <div className="mt-3 p-3 bg-zinc-800/90 border border-blue-500/60 rounded-lg flex justify-between items-center shadow">
-                          <span className="text-white font-semibold text-sm">
-                            {selectedLanguage === 'ar' ? 'المبلغ الإجمالي:' : 'Total Amount:'}
-                          </span>
-                          <span className="text-blue-400 font-bold text-base">
-                            {calculateTreatmentsTotal()} {selectedLanguage === 'ar' ? 'ريال' : 'QR'}
-                          </span>
+                        {/* Total Duration & Amount Summary */}
+                        <div className="mt-3 p-3 bg-zinc-800/90 border border-blue-500/60 rounded-lg space-y-2 shadow">
+                          {calculateTreatmentsTotalDuration().formatted && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-300 font-medium text-sm">
+                                {selectedLanguage === 'ar' ? 'إجمالي المدة:' : 'Total Duration:'}
+                              </span>
+                              <span className="text-blue-300 font-semibold text-sm">
+                                {calculateTreatmentsTotalDuration().formatted}
+                              </span>
+                            </div>
+                          )}
+                          <div className={`flex justify-between items-center ${calculateTreatmentsTotalDuration().formatted ? 'pt-2 border-t border-zinc-700/60' : ''}`}>
+                            <span className="text-white font-semibold text-sm">
+                              {selectedLanguage === 'ar' ? 'المبلغ الإجمالي:' : 'Total Amount:'}
+                            </span>
+                            <span className="text-blue-400 font-bold text-base">
+                              {calculateTreatmentsTotal()} {selectedLanguage === 'ar' ? 'ريال' : 'QR'}
+                            </span>
+                          </div>
                         </div>
 
                         <button
