@@ -29,6 +29,7 @@ import treatmentRoutes from './routes/treatmentRoutes.js';
 import customerRoutes from './routes/customerRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
+import productRoutes from './routes/productRoutes.js';
 
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -37,6 +38,7 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/food-beverages', foodBeverageRoutes);
+app.use('/api/products', productRoutes); // ✅ this uses multer
 
 // ✅ Static file serving
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

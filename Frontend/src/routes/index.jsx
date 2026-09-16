@@ -20,6 +20,9 @@ import Logout from "@pages/Logout"; // ✅ Add this import
 import ProtectedRoute from "@pages/ProtectedRoute";
 import FoodBeverages from "@pages/FoodBeverages";
 import FoodAdmin from "@pages/FoodAdmin";
+import Facility from "@pages/Facility";
+import Product from "@pages/Product";
+import ProductAdmin from "@pages/ProductAdmin";
 
 
 const Loadable = (Component) => (props) => {
@@ -51,6 +54,7 @@ export default function Router() {
     { path: "/settings", element: <Settings /> },
     { path: "/users", element: <Users /> },
     { path: "/food-admin", element: <FoodAdmin /> },
+    { path: "/product-admin", element: <ProductAdmin /> },
     { path: "/logout", element: <Logout /> },
     { path: "/404", element: <Page404 /> },
     { path: "*", element: <Navigate to="/404" replace /> },
@@ -60,6 +64,8 @@ export default function Router() {
     { path: "/services", element: <Services /> },
     { path: "/menu", element: <Services /> },
     { path: "/brochure", element: <BrochureDisplay /> },
+    { path: "/product", element: <Product /> },
+    { path: "/facility", element: <Facility /> },
     { path: "/food-beverages", element: <FoodBeverages /> },
     { path: "/booking", element: <BookingForm /> },
     { path: "/pdf-preview", element: <PDFPreviewPage /> },

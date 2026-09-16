@@ -84,8 +84,8 @@ const BrochureDisplay = () => {
       servicesToPass = [selectedCategory];
     }
 
-    // Pass selected services, treatments, and durations to FoodBeverages page
-    navigate(`/food-beverages?lang=${selectedLanguage}&services=${servicesToPass.join(",")}&treatments=${selectedTreatments.join(",")}&durations=${encodeURIComponent(durationsParam)}`);
+    // Pass selected services, treatments, and durations to Product page next
+    navigate(`/product?lang=${selectedLanguage}&services=${servicesToPass.join(",")}&treatments=${selectedTreatments.join(",")}&durations=${encodeURIComponent(durationsParam)}`);
   };
   const location = useLocation();
   const navigate = useNavigate();

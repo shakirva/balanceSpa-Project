@@ -6,6 +6,7 @@ import {
   FaUsers,
   FaUser,
   FaCalendarAlt,
+  FaShoppingBag,
 } from "react-icons/fa";
 import { RiStackFill } from "react-icons/ri";
 import { BsBoxSeamFill } from "react-icons/bs";
@@ -50,6 +51,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar }) => {
         <MenuItem icon={<FaUser />} text="Users" to="/users" isCollapsed={isCollapsed} />
         <MenuItem icon={<FaCog />} text="Settings" to="/settings" isCollapsed={isCollapsed} />
         <MenuItem icon={<BsBoxSeamFill />} text="Food Admin" to="/food-admin" isCollapsed={isCollapsed} />
+        <MenuItem icon={<FaShoppingBag />} text="Products" to="/product-admin" isCollapsed={isCollapsed} />
         <LogoutItem icon={<FaSignOutAlt />} text="Logout" isCollapsed={isCollapsed} />
       </div>
     </div>
