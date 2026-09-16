@@ -3,6 +3,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import { getMediaUrl } from "../utils/media";
 
+// Inline placeholder (no network dependency) — /default-treatment.jpg referenced
+// elsewhere in this app doesn't actually exist in Frontend/public.
+const NO_IMAGE =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%2327272a'/%3E%3Ccircle cx='150' cy='110' r='24' fill='%233f3f46'/%3E%3Cpath d='M120 210l55-65 42 48 36-42 60 72z' fill='%233f3f46'/%3E%3C/svg%3E";
+
 const Product = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -143,14 +148,21 @@ const Product = () => {
                     isSelected ? "border-blue-500 ring-2 ring-blue-500" : "border-gray-800"
                   }`}
                 >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleProduct(product.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className={`absolute top-3 ${lang === "ar" ? "left-3" : "right-3"} w-5 h-5 accent-blue-500 cursor-pointer z-10`}
+                  />
                   <img
-                    src={getMediaUrl(product.image_url)}
+                    src={product.image_url ? getMediaUrl(product.image_url, NO_IMAGE) : NO_IMAGE}
                     alt={lang === "ar" ? product.name_ar : product.name_en}
-                    className="w-full h-48 object-cover"
+                    className="w-full h-48 object-cover bg-zinc-800"
                     onError={(e) => {
                       if (e.target.dataset.failed) return;
                       e.target.dataset.failed = "true";
-                      e.target.src = "/default-treatment.jpg";
+                      e.target.src = NO_IMAGE;
                     }}
                   />
                   <div className="p-4">
