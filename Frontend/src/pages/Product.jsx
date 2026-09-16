@@ -17,6 +17,7 @@ const Product = () => {
   const servicesParam = params.get("services");
   const treatments = params.get("treatments");
   const durations = params.get("durations");
+  const firstSelectedServiceId = servicesParam ? servicesParam.split(",")[0]?.trim() : null;
 
   const [categories, setCategories] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
@@ -47,9 +48,10 @@ const Product = () => {
 
   useEffect(() => {
     if (!activeTab && tabCategories.length > 0) {
-      setActiveTab(String(tabCategories[0].id));
+      const preselected = tabCategories.find((cat) => String(cat.id) === firstSelectedServiceId);
+      setActiveTab(String((preselected || tabCategories[0]).id));
     }
-  }, [tabCategories, activeTab]);
+  }, [tabCategories, activeTab, firstSelectedServiceId]);
 
   const visibleProducts = useMemo(() => {
     if (!activeTab) return [];
