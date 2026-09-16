@@ -240,7 +240,7 @@ export default function ProductAdmin() {
             <Input.TextArea rows={2} style={{ direction: "rtl" }} />
           </Form.Item>
 
-          <Form.Item name="price" label="Price (QR)" rules={[{ required: true }]}>
+          <Form.Item name="price" label="Price (QR)">
             <InputNumber min={0} style={{ width: "100%" }} />
           </Form.Item>
 
