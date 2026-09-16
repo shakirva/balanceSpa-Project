@@ -1,7 +1,10 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const MATTERPORT_URL = "https://my.matterport.com/show/?m=N7vsiehnUVx";
+// No real tour URL yet — the previous embed was a placeholder/demo link
+// that doesn't belong to this facility. Set the real Matterport URL here
+// once it's available.
+const MATTERPORT_URL = "";
 
 const Facility = () => {
   const location = useLocation();
@@ -58,13 +61,19 @@ const Facility = () => {
       {/* Virtual Tour */}
       <div className="flex-1 flex flex-col items-center p-6">
         <div className="w-full max-w-5xl aspect-video rounded-xl overflow-hidden shadow-lg">
-          <iframe
-            src={MATTERPORT_URL}
-            title="Matterport Virtual Tour"
-            className="w-full h-full border-0"
-            allowFullScreen
-            allow="xr-spatial-tracking"
-          />
+          {MATTERPORT_URL ? (
+            <iframe
+              src={MATTERPORT_URL}
+              title="Matterport Virtual Tour"
+              className="w-full h-full border-0"
+              allowFullScreen
+              allow="xr-spatial-tracking"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-zinc-900 border border-zinc-800 text-gray-400 text-lg">
+              {lang === "ar" ? "الجولة الافتراضية قريباً" : "Virtual tour coming soon"}
+            </div>
+          )}
         </div>
 
         <div className="mt-10">
