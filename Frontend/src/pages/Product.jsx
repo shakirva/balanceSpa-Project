@@ -17,10 +17,6 @@ const Product = () => {
   const servicesParam = params.get("services");
   const treatments = params.get("treatments");
   const durations = params.get("durations");
-  const selectedServiceIds = useMemo(
-    () => (servicesParam ? servicesParam.split(",").map((id) => id.trim()).filter(Boolean) : []),
-    [servicesParam]
-  );
 
   const [categories, setCategories] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
@@ -46,11 +42,8 @@ const Product = () => {
     fetchData();
   }, []);
 
-  // Only show tabs for the services the customer already selected
-  const tabCategories = useMemo(() => {
-    if (selectedServiceIds.length === 0) return categories;
-    return categories.filter((cat) => selectedServiceIds.includes(String(cat.id)));
-  }, [categories, selectedServiceIds]);
+  // Show every service as a tab, regardless of what the customer selected earlier
+  const tabCategories = categories;
 
   useEffect(() => {
     if (!activeTab && tabCategories.length > 0) {
