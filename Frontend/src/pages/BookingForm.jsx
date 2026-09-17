@@ -50,11 +50,13 @@ const BookingForm = () => {
     // Removed duplicate declarations of query param variables
     const selectedTreatmentQS = params.get('treatment') || params.get('treatments');
     const selectedFoodsQS = params.get('food');
+    const selectedProductsQS = params.get('products');
     const selectedDurationsQS = params.get('durations');
     const selectedLanguageQS = params.get('lang');
     const selectedLanguage = selectedLanguageQS || location.state?.language || 'en';
     const translations = getTranslations(selectedLanguage).booking;
     const selectedFoodsArr = selectedFoodsQS ? selectedFoodsQS.split(',').map(f => f.trim()).filter(Boolean) : [];
+    const selectedProductsArr = selectedProductsQS ? selectedProductsQS.split(',').map(p => p.trim()).filter(Boolean) : [];
     
     // Parse durations data - format: treatmentId:duration:price,treatmentId:duration:price
     const selectedDurationsData = selectedDurationsQS ? 
@@ -69,12 +71,20 @@ const BookingForm = () => {
   const selectedServicesArr = selectedServiceQS ? selectedServiceQS.split(',').map(s => s.trim()).filter(Boolean) : [];
   const selectedTreatmentsArr = selectedTreatmentQS ? selectedTreatmentQS.split(',').map(t => t.trim()).filter(Boolean) : [];
   const [foodsList, setFoodsList] = useState([]);
+  const [productsList, setProductsList] = useState([]);
 
   // Fetch all foods for name mapping
   useEffect(() => {
     axios.get('/api/food-beverages')
       .then(res => setFoodsList(Array.isArray(res.data) ? res.data : []))
       .catch(() => setFoodsList([]));
+  }, []);
+
+  // Fetch all products for name mapping
+  useEffect(() => {
+    axios.get('/api/products')
+      .then(res => setProductsList(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setProductsList([]));
   }, []);
   // Removed duplicate declarations of query param variables
 
@@ -106,6 +116,7 @@ const [formData, setFormData] = useState({
     selectedServices: selectedServicesArr,
     selectedTreatments: selectedTreatmentsArr,
     selectedFoods: selectedFoodsArr,
+    selectedProducts: selectedProductsArr,
     selectedDurations: selectedDurationsData,
     selectedDuration: '',
     selectedPrice: ''
@@ -115,6 +126,13 @@ const [formData, setFormData] = useState({
   useEffect(() => {
     if (selectedFoodsArr.length > 0) {
       setFormData(prev => ({ ...prev, selectedFoods: selectedFoodsArr }));
+    }
+  }, []);
+
+  // Pre-fill products on mount (if needed for future dynamic updates)
+  useEffect(() => {
+    if (selectedProductsArr.length > 0) {
+      setFormData(prev => ({ ...prev, selectedProducts: selectedProductsArr }));
     }
   }, []);
 
@@ -190,6 +208,7 @@ const [isModalOpen, setIsModalOpen] = useState(false);
 const [showServiceDropdown, setShowServiceDropdown] = useState(false);
 const [showTreatmentDropdown, setShowTreatmentDropdown] = useState(false);
 const [showFoodDropdown, setShowFoodDropdown] = useState(false);
+const [showProductDropdown, setShowProductDropdown] = useState(false);
 
 
 
@@ -338,6 +357,7 @@ const [showFoodDropdown, setShowFoodDropdown] = useState(false);
         setShowServiceDropdown(false);
         setShowTreatmentDropdown(false);
         setShowFoodDropdown(false);
+        setShowProductDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -384,6 +404,7 @@ const handleSubmit = async (e) => {
     categories,
     treatments,
     foodsList,
+    productsList,
   };
 
   const pdfBlob = await generateAppointmentPDF(pdfData);
@@ -883,6 +904,92 @@ const handleClearSignature = () => {
                             <div className="text-sm text-gray-400">
                               {food.price} {selectedLanguage === 'ar' ? 'ريال' : 'QR'}
                             </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Products Selection Section */}
+                  <div className="mb-4">
+                    <h2 className="font-bold text-white text-lg mb-2 tracking-wide">{selectedLanguage === 'ar' ? 'المنتجات' : 'Products'}</h2>
+
+                    {/* Show selected products or dropdown */}
+                    {formData.selectedProducts && formData.selectedProducts.length > 0 ? (
+                      <div>
+                        <div className="text-sm text-gray-300 mb-2">{selectedLanguage === 'ar' ? 'المنتجات المختارة:' : 'Selected Products:'}</div>
+                        {formData.selectedProducts.map((productId, idx) => {
+                          const selectedProduct = productsList.find(product => String(product.id) === String(productId));
+                          return (
+                            <div key={productId + idx} className="mb-2 p-2 bg-zinc-800 rounded-lg border border-zinc-700 flex justify-between items-center">
+                              <span className="text-white font-medium">
+                                {selectedProduct ? (selectedLanguage === 'ar' ? selectedProduct.name_ar : selectedProduct.name_en) : productId}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    selectedProducts: (prev.selectedProducts || []).filter(id => String(id) !== String(productId))
+                                  }));
+                                }}
+                                className="text-red-400 hover:text-red-300 text-base font-bold px-2 py-1 cursor-pointer transition-colors"
+                                title={selectedLanguage === 'ar' ? 'إزالة' : 'Remove'}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          );
+                        })}
+                        <button
+                          type="button"
+                          onClick={() => setShowProductDropdown(!showProductDropdown)}
+                          className="text-blue-400 hover:text-blue-300 text-sm mt-2"
+                        >
+                          + {selectedLanguage === 'ar' ? 'إضافة منتج آخر' : 'Add Another Product'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="text-sm text-gray-400 mb-2">{selectedLanguage === 'ar' ? 'اختر المنتجات (اختياري):' : 'Select Products (Optional):'}</div>
+                        <button
+                          type="button"
+                          onClick={() => setShowProductDropdown(!showProductDropdown)}
+                          className="w-full bg-zinc-800 border border-zinc-700 p-3 rounded-lg text-white text-left hover:bg-zinc-700 transition"
+                        >
+                          {selectedLanguage === 'ar' ? 'اختر المنتجات...' : 'Choose Products...'}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Product Dropdown */}
+                    {showProductDropdown && productsList.length > 0 && (
+                      <div className="dropdown-container mt-2 bg-zinc-800 border border-zinc-600 rounded-lg max-h-40 overflow-y-auto">
+                        {productsList.map(product => (
+                          <button
+                            key={product.id}
+                            type="button"
+                            onClick={() => {
+                              const productId = String(product.id);
+                              if (!formData.selectedProducts.includes(productId)) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  selectedProducts: [...prev.selectedProducts, productId]
+                                }));
+                              }
+                              setShowProductDropdown(false);
+                            }}
+                            className="w-full text-left p-3 hover:bg-zinc-700 transition text-white border-b border-zinc-700 last:border-b-0"
+                          >
+                            <div className="font-medium">
+                              {selectedLanguage === 'ar' ? product.name_ar : product.name_en}
+                            </div>
+                            {product.price != null && (
+                              <div className="text-sm text-gray-400">
+                                {product.price} {selectedLanguage === 'ar' ? 'ريال' : 'QR'}
+                              </div>
+                            )}
                           </button>
                         ))}
                       </div>

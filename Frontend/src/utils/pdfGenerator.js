@@ -159,6 +159,7 @@ export const generateAppointmentPDF = async (formData) => {
   // Get names for selected services, treatments, foods
   const selectedServicesNames = getNames(formData.selectedServices, formData.categories || [], 'service');
   const selectedFoodsNames = getNames(formData.selectedFoods, formData.foodsList || [], 'food');
+  const selectedProductsNames = getNames(formData.selectedProducts, formData.productsList || [], 'treatment');
   
   // Generate treatment names with duration and price info
   const selectedTreatmentsWithDuration = formData.selectedTreatments ? 
@@ -190,6 +191,7 @@ export const generateAppointmentPDF = async (formData) => {
     selectedServices: formData.language === 'ar' ? 'الخدمات المختارة' : 'Selected Services',
     selectedTreatments: formData.language === 'ar' ? 'العلاجات المختارة' : 'Selected Treatments',
     selectedFoods: formData.language === 'ar' ? 'الأطعمة والمشروبات المختارة' : 'Selected Foods & Beverages',
+    selectedProducts: formData.language === 'ar' ? 'المنتجات المختارة' : 'Selected Products',
     knowAboutUs: formData.language === 'ar' ? 'كيف علمت عنا؟' : 'How did you know about us?',
     source: formData.language === 'ar' ? 'المصدر' : 'Source',
     socialMedia: formData.language === 'ar' ? 'وسائل التواصل الاجتماعي' : 'Social Media',
@@ -270,6 +272,8 @@ export const generateAppointmentPDF = async (formData) => {
         <div class="selected-list">${selectedTreatmentsWithDuration.length ? selectedTreatmentsWithDuration.map(n => `<span>${n}</span>`).join('') : labels.notAvailable}</div>
         <div class="label">${labels.selectedFoods}</div>
         <div class="selected-list">${selectedFoodsNames.length ? selectedFoodsNames.map(n => `<span>${n}</span>`).join('') : labels.notAvailable}</div>
+        <div class="label">${labels.selectedProducts}</div>
+        <div class="selected-list">${selectedProductsNames.length ? selectedProductsNames.map(n => `<span>${n}</span>`).join('') : labels.notAvailable}</div>
         <div class="line"></div>
         <div class="section-title">${labels.knowAboutUs}</div>
         <div class="label">${labels.source}</div><div class="value">${Array.isArray(formData.knowFrom) ? formData.knowFrom.join(', ') : labels.notAvailable}</div>

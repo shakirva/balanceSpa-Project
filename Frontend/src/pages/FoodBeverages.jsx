@@ -14,6 +14,7 @@ const FoodBeverages = () => {
   const services = params.get('services');
   const treatments = params.get('treatments');
   const durations = params.get('durations');
+  const products = params.get('products');
   const translations = getTranslations(lang);
   const [items, setItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
@@ -225,6 +226,7 @@ const FoodBeverages = () => {
               + (services ? `&services=${services}` : '')
               + (treatments ? `&treatments=${treatments}` : '')
               + (durations ? `&durations=${durations}` : '')
+              + (products ? `&products=${products}` : '')
               + (selectedItems.length > 0 ? `&food=${selectedItems.join(",")}` : '');
           }}
         >
