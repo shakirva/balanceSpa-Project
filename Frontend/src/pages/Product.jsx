@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import { getMediaUrl } from "../utils/media";
@@ -7,6 +7,48 @@ import { getMediaUrl } from "../utils/media";
 // elsewhere in this app doesn't actually exist in Frontend/public.
 const NO_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%2327272a'/%3E%3Ccircle cx='150' cy='110' r='24' fill='%233f3f46'/%3E%3Cpath d='M120 210l55-65 42 48 36-42 60 72z' fill='%233f3f46'/%3E%3C/svg%3E";
+
+const ProductCard = ({ product, lang, isSelected, onToggle }) => (
+  <div
+    onClick={onToggle}
+    className={`bg-zinc-900 rounded-xl overflow-hidden shadow hover:bg-zinc-800 transition-all duration-300 cursor-pointer border relative ${
+      isSelected ? "border-blue-500 ring-2 ring-blue-500" : "border-gray-800"
+    }`}
+  >
+    <input
+      type="checkbox"
+      checked={isSelected}
+      onChange={onToggle}
+      onClick={(e) => e.stopPropagation()}
+      className={`absolute top-3 ${lang === "ar" ? "left-3" : "right-3"} w-5 h-5 accent-blue-500 cursor-pointer z-10`}
+    />
+    <img
+      src={product.image_url ? getMediaUrl(product.image_url, NO_IMAGE) : NO_IMAGE}
+      alt={lang === "ar" ? product.name_ar : product.name_en}
+      className="w-full h-48 object-cover bg-zinc-800"
+      onError={(e) => {
+        if (e.target.dataset.failed) return;
+        e.target.dataset.failed = "true";
+        e.target.src = NO_IMAGE;
+      }}
+    />
+    <div className="p-4">
+      <div className="flex justify-between items-start gap-2 mb-2">
+        <h3 className="text-lg font-bold text-white">
+          {lang === "ar" ? product.name_ar : product.name_en}
+        </h3>
+        {product.price != null && (
+          <span className="text-sm font-semibold text-[#ababab] whitespace-nowrap">
+            {product.price} {lang === "ar" ? "ريال" : "QR"}
+          </span>
+        )}
+      </div>
+      <p className="text-sm text-gray-300">
+        {lang === "ar" ? product.description_ar : product.description_en}
+      </p>
+    </div>
+  </div>
+);
 
 const Product = () => {
   const location = useLocation();
@@ -21,9 +63,9 @@ const Product = () => {
 
   const [categories, setCategories] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
-  const [activeTab, setActiveTab] = useState(null);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const sectionRefs = useRef({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,20 +85,23 @@ const Product = () => {
     fetchData();
   }, []);
 
-  // Show every service as a tab, regardless of what the customer selected earlier
-  const tabCategories = categories;
+  // Group products under every service that has at least one, in service order
+  const sections = useMemo(() => {
+    return categories
+      .map((cat) => ({
+        ...cat,
+        products: allProducts.filter((p) => String(p.category_id) === String(cat.id)),
+      }))
+      .filter((cat) => cat.products.length > 0);
+  }, [categories, allProducts]);
 
+  // Scroll straight to the customer's selected service once the page loads
   useEffect(() => {
-    if (!activeTab && tabCategories.length > 0) {
-      const preselected = tabCategories.find((cat) => String(cat.id) === firstSelectedServiceId);
-      setActiveTab(String((preselected || tabCategories[0]).id));
+    if (!loading && firstSelectedServiceId) {
+      const el = sectionRefs.current[firstSelectedServiceId];
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [tabCategories, activeTab, firstSelectedServiceId]);
-
-  const visibleProducts = useMemo(() => {
-    if (!activeTab) return [];
-    return allProducts.filter((p) => String(p.category_id) === activeTab);
-  }, [allProducts, activeTab]);
+  }, [loading, firstSelectedServiceId]);
 
   const toggleProduct = (id) => {
     setSelectedProducts((prev) =>
@@ -105,80 +150,39 @@ const Product = () => {
         </div>
       </div>
 
-      {/* Service Tabs */}
-      {tabCategories.length > 0 && (
-        <div className="overflow-x-auto whitespace-nowrap px-6 py-4 bg-[#121212] border-b border-zinc-800">
-          {tabCategories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveTab(String(cat.id))}
-              className={`inline-block px-4 py-2 text-sm font-medium rounded-full mx-1 transition-all duration-300 transform hover:scale-105
-                ${activeTab === String(cat.id) ? "bg-white text-black shadow-md" : "bg-zinc-800 text-white hover:bg-zinc-700 hover:shadow-md"}`}
-            >
-              {lang === "ar" ? cat.name_ar : cat.name_en}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Product Grid */}
+      {/* Service Sections */}
       <div className="flex-1 p-6 container mx-auto w-full">
         {loading ? (
           <div className="flex justify-center items-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
           </div>
-        ) : visibleProducts.length === 0 ? (
+        ) : sections.length === 0 ? (
           <p className="text-center text-gray-400 py-20 text-lg">
-            {lang === "ar" ? "لا توجد منتجات متاحة لهذه الخدمة." : "No products available for this service."}
+            {lang === "ar" ? "لا توجد منتجات متاحة." : "No products available."}
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibleProducts.map((product) => {
-              const isSelected = selectedProducts.includes(product.id);
-              return (
-                <div
-                  key={product.id}
-                  onClick={() => toggleProduct(product.id)}
-                  className={`bg-zinc-900 rounded-xl overflow-hidden shadow hover:bg-zinc-800 transition-all duration-300 cursor-pointer border relative ${
-                    isSelected ? "border-blue-500 ring-2 ring-blue-500" : "border-gray-800"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleProduct(product.id)}
-                    onClick={(e) => e.stopPropagation()}
-                    className={`absolute top-3 ${lang === "ar" ? "left-3" : "right-3"} w-5 h-5 accent-blue-500 cursor-pointer z-10`}
+          sections.map((section) => (
+            <div
+              key={section.id}
+              ref={(el) => (sectionRefs.current[String(section.id)] = el)}
+              className="mb-12 scroll-mt-6"
+            >
+              <h2 className="text-xl font-bold text-white mb-2 border-b-2 border-blue-500 pb-2 inline-block">
+                {lang === "ar" ? section.name_ar : section.name_en}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+                {section.products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    lang={lang}
+                    isSelected={selectedProducts.includes(product.id)}
+                    onToggle={() => toggleProduct(product.id)}
                   />
-                  <img
-                    src={product.image_url ? getMediaUrl(product.image_url, NO_IMAGE) : NO_IMAGE}
-                    alt={lang === "ar" ? product.name_ar : product.name_en}
-                    className="w-full h-48 object-cover bg-zinc-800"
-                    onError={(e) => {
-                      if (e.target.dataset.failed) return;
-                      e.target.dataset.failed = "true";
-                      e.target.src = NO_IMAGE;
-                    }}
-                  />
-                  <div className="p-4">
-                    <div className="flex justify-between items-start gap-2 mb-2">
-                      <h3 className="text-lg font-bold text-white">
-                        {lang === "ar" ? product.name_ar : product.name_en}
-                      </h3>
-                      {product.price != null && (
-                        <span className="text-sm font-semibold text-[#ababab] whitespace-nowrap">
-                          {product.price} {lang === "ar" ? "ريال" : "QR"}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-300">
-                      {lang === "ar" ? product.description_ar : product.description_en}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                ))}
+              </div>
+            </div>
+          ))
         )}
       </div>
 
