@@ -1,10 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-// No real tour URL yet — the previous embed was a placeholder/demo link
-// that doesn't belong to this facility. Set the real Matterport URL here
-// once it's available.
-const MATTERPORT_URL = "";
+const MATTERPORT_URL = "https://my.matterport.com/show/?m=N7vsiehnUVx";
 
 const Facility = () => {
   const location = useLocation();
