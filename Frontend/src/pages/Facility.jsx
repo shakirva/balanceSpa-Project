@@ -1,7 +1,15 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const MATTERPORT_URL = "https://my.matterport.com/show/?m=N7vsiehnUVx";
+// Add more entries here as more facility tours/media become available —
+// they lay out two per row automatically.
+const FACILITY_ITEMS = [
+  {
+    id: "main-tour",
+    title: { en: "Virtual Tour", ar: "جولة افتراضية" },
+    url: "https://my.matterport.com/show/?m=N7vsiehnUVx",
+  },
+];
 
 const Facility = () => {
   const location = useLocation();
@@ -55,22 +63,33 @@ const Facility = () => {
         </div>
       </div>
 
-      {/* Virtual Tour */}
+      {/* Facility Items */}
       <div className="flex-1 flex flex-col items-center p-6">
-        <div className="w-full max-w-5xl aspect-video rounded-xl overflow-hidden shadow-lg">
-          {MATTERPORT_URL ? (
-            <iframe
-              src={MATTERPORT_URL}
-              title="Matterport Virtual Tour"
-              className="w-full h-full border-0"
-              allowFullScreen
-              allow="xr-spatial-tracking"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-zinc-900 border border-zinc-800 text-gray-400 text-lg">
-              {lang === "ar" ? "الجولة الافتراضية قريباً" : "Virtual tour coming soon"}
+        <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {FACILITY_ITEMS.map((item) => (
+            <div key={item.id} className="flex flex-col gap-2">
+              {item.title && (
+                <h2 className="text-lg font-semibold text-white">
+                  {lang === "ar" ? item.title.ar : item.title.en}
+                </h2>
+              )}
+              <div className="w-full aspect-video rounded-xl overflow-hidden shadow-lg">
+                {item.url ? (
+                  <iframe
+                    src={item.url}
+                    title={item.title ? item.title.en : "Facility"}
+                    className="w-full h-full border-0"
+                    allowFullScreen
+                    allow="xr-spatial-tracking"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-zinc-900 border border-zinc-800 text-gray-400 text-lg">
+                    {lang === "ar" ? "قريباً" : "Coming soon"}
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+          ))}
         </div>
 
         <div className="mt-10">
